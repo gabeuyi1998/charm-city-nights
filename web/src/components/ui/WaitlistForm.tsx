@@ -34,8 +34,13 @@ export function WaitlistForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: data.email, crabs_found: crabsFound }),
       });
-      if (!res.ok) throw new Error("Failed");
-      const result = (await res.json()) as WaitlistEntry;
+      const result = (await res.json()) as WaitlistEntry & { alreadyJoined?: boolean; error?: string };
+      if (res.status === 409 || result.alreadyJoined) {
+        toast.info("You're already on the list! Check your inbox. 🦀");
+        setState("idle");
+        return;
+      }
+      if (!res.ok) throw new Error(result.error ?? "Failed");
       setEntry(result);
       setState("success");
       window.dispatchEvent(new CustomEvent("crab-party"));
