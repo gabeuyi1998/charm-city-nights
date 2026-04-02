@@ -1,6 +1,6 @@
 output "api_gateway_url" {
   description = "API Gateway endpoint URL — set as NEXT_PUBLIC_API_URL in .env.local and GitHub secret API_GATEWAY_URL"
-  value       = "${aws_apigatewayv2_stage.default.invoke_url}/waitlist"
+  value       = "${trimsuffix(aws_apigatewayv2_stage.default.invoke_url, "/")}/waitlist"
 }
 
 output "dynamodb_table_name" {
