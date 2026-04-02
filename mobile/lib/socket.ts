@@ -1,7 +1,8 @@
 // Lightweight Socket.io v4 client over native WebSocket
 // Only handles the events we need: crowd:update, checkin
 
-const SOCKET_URL = 'ws://localhost:3000/socket.io/?EIO=4&transport=websocket';
+const _base = process.env.EXPO_PUBLIC_SOCKET_URL ?? 'ws://localhost:3000';
+const SOCKET_URL = `${_base}/socket.io/?EIO=4&transport=websocket`;
 
 type CrowdUpdate = { barId: string; currentCrowd: number };
 type CrowdUpdateListener = (data: CrowdUpdate) => void;

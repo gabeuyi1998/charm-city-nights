@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
+import morgan from 'morgan';
 import { generalLimiter } from './middleware/rateLimiter';
 import authRouter from './routes/auth';
 import barsRouter from './routes/bars';
@@ -18,12 +19,15 @@ import prisma from './lib/prisma';
 const app = express();
 const httpServer = http.createServer(app);
 
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000').split(',');
+
 export const io = new Server(httpServer, {
-  cors: { origin: '*', methods: ['GET', 'POST'] },
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
 });
 
 app.use(helmet());
-app.use(cors({ origin: '*', credentials: true }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(generalLimiter);
 

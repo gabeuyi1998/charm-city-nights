@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 
-export const BASE_URL = 'http://localhost:3000/api';
+export const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000') + '/api';
 
 async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync('jwt');

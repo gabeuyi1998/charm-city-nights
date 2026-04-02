@@ -63,8 +63,21 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="collection"
+        options={{
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={(focused ? 'trophy' : 'trophy-outline') as IoniconsName}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="crawls"
         options={{
+          tabBarShowLabel: false,
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons
               name={(focused ? 'map' : 'map-outline') as IoniconsName}

@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "reset": "kill $(lsof -ti tcp:8081,8082,8083) 2>/dev/null; rm -rf .expo node_modules/.cache && expo start --clear"
   },
   "dependencies": {
     "@expo-google-fonts/bebas-neue": "^0.4.1",
