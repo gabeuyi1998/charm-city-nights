@@ -1,0 +1,14 @@
+{
+  "id": "session-1775107003234",
+  "startedAt": "2026-04-02T05:16:43.234Z",
+  "cwd": "/Users/gabrielonyijen/charm-city-nights/mobile",
+  "context": {},
+  "metrics": {
+    "edits": 32,
+    "commands": 0,
+    "tasks": 0,
+    "errors": 0
+  },
+  "endedAt": "2026-04-02T06:48:01.704Z",
+  "duration": 5478471
+}

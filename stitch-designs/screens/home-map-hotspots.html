@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Lounge | Discover Baltimore</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary": "#e9c349","on-error": "#690005","tertiary-container": "#c9a900",
+                        "background": "#131313","error-container": "#93000a","tertiary": "#e9c400",
+                        "surface-container-low": "#1c1b1b","primary": "#ffb59a","on-primary-container": "#521800",
+                        "surface-container-lowest": "#0e0e0e","outline": "#ab897d","inverse-primary": "#a73a00",
+                        "surface": "#131313","on-error-container": "#ffdad6","surface-bright": "#3a3939",
+                        "surface-variant": "#353534","surface-tint": "#ffb59a","on-surface-variant": "#e4beb1",
+                        "secondary-container": "#af8d11","on-primary": "#5a1b00","error": "#ffb4ab",
+                        "on-background": "#e5e2e1","on-secondary": "#3c2f00","on-surface": "#e5e2e1",
+                        "inverse-surface": "#e5e2e1","outline-variant": "#5b4137","surface-container": "#201f1f",
+                        "surface-container-high": "#2a2a2a","surface-dim": "#131313",
+                        "primary-fixed": "#ffdbce","primary-container": "#ff5c00","inverse-on-surface": "#313030"
+                    },
+                    fontFamily: {"headline": ["Manrope"],"body": ["Manrope"],"label": ["Manrope"]},
+                    borderRadius: {"DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel { background: rgba(53,53,52,0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .map-gradient { background: radial-gradient(circle at center, transparent 0%, #131313 100%); }
+        .hotspot-pulse { box-shadow: 0 0 0 0 rgba(255,92,0,0.7); animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(255,92,0,0.7); }
+            70%  { box-shadow: 0 0 0 15px rgba(255,92,0,0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,92,0,0); }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { min-height: max(884px, 100dvh); }
+    </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-white overflow-hidden h-screen w-screen">
+<header class="fixed top-0 w-full z-50 bg-[#131313]/60 backdrop-blur-xl flex justify-between items-center px-6 h-16">
+<button class="text-[#e5e2e1]/60 hover:text-[#ffb59a] transition-colors scale-95 active:duration-100"><span class="material-symbols-outlined">search</span></button>
+<h1 class="text-xl font-black uppercase tracking-widest text-[#ff5c00]">KINETIC LOUNGE</h1>
+<button class="text-[#e5e2e1]/60 hover:text-[#ffb59a] transition-colors scale-95 active:duration-100"><span class="material-symbols-outlined">notifications</span></button>
+</header>
+<main class="relative h-full w-full pt-16">
+<!-- Map Background -->
+<div class="absolute inset-0 z-0 overflow-hidden bg-surface-container-lowest">
+<img class="w-full h-full object-cover opacity-40 grayscale contrast-125" data-alt="Dark stylized aerial map of Baltimore inner harbor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQFdRW50i0tsf6iAbzN2-mJx3ydNZArdGkeOtgfvJwZbdEW7c_ZQj4qmyptrdwQvpI_JUvZpSGwwfREP_SoKlUuYfFDLMw-gZ4UPztAkU3JrTMwieUixjqA1ATHORnuuXmAkeDKkZ3ejydjA7A1rWaTgLcn7jWIN3weJPL2lqO7ClBYb074bKZTIzQESECJZUzGtGTnmMum3IiRR8FnbGqqLpkdkRBD8QNGnYQAwOULYuGwDelyKv3BUtWiJ0318LNRMoPZnSK0ss"/>
+<div class="absolute inset-0 map-gradient"></div>
+<!-- Hotspots -->
+<div class="absolute top-[40%] left-[55%] group cursor-pointer">
+<div class="hotspot-pulse w-4 h-4 bg-primary-container rounded-full relative z-10"></div>
+<div class="absolute top-6 left-1/2 -translate-x-1/2 glass-panel px-3 py-1 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<span class="text-[10px] font-bold tracking-widest uppercase">Power Plant Live!</span>
+</div>
+</div>
+<div class="absolute top-[60%] left-[70%] group cursor-pointer">
+<div class="hotspot-pulse w-3 h-3 bg-secondary rounded-full relative z-10" style="animation-delay: 0.5s"></div>
+<div class="absolute top-6 left-1/2 -translate-x-1/2 glass-panel px-3 py-1 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<span class="text-[10px] font-bold tracking-widest uppercase">Fells Point</span>
+</div>
+</div>
+<div class="absolute top-[75%] left-[45%] group cursor-pointer">
+<div class="hotspot-pulse w-4 h-4 bg-primary-container rounded-full relative z-10" style="animation-delay: 1.2s"></div>
+<div class="absolute top-6 left-1/2 -translate-x-1/2 glass-panel px-3 py-1 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<span class="text-[10px] font-bold tracking-widest uppercase">Federal Hill</span>
+</div>
+</div>
+</div>
+<!-- Search Bar -->
+<div class="absolute top-8 left-1/2 -translate-x-1/2 w-[90%] md:w-[600px] z-20">
+<div class="glass-panel p-1 rounded-full flex items-center border border-outline-variant/20">
+<span class="material-symbols-outlined ml-4 text-on-surface-variant">explore</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-on-surface placeholder:text-on-surface-variant/50 px-4 py-3 font-medium" placeholder="Search venues, events, or artists..." type="text"/>
+<button class="bg-primary-container text-on-primary-container px-6 py-3 rounded-full font-bold text-xs tracking-tighter uppercase mr-1">GO</button>
+</div>
+</div>
+<!-- Live Stories Bottom Sheet -->
+<div class="absolute bottom-32 left-0 w-full z-20 px-6">
+<div class="flex items-end justify-between mb-6">
+<div>
+<span class="text-secondary font-bold text-[10px] tracking-[0.2em] uppercase mb-1 block">Happening Now</span>
+<h2 class="text-3xl font-extrabold tracking-tighter italic uppercase leading-none">Live <span class="text-primary-container">Stories</span></h2>
+</div>
+<button class="text-primary text-xs font-bold uppercase tracking-widest border-b border-primary/20 pb-1">View All</button>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+<div class="min-w-[160px] h-64 bg-surface-container-low rounded-xl relative overflow-hidden group cursor-pointer border border-outline-variant/10">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMyfrxmvSrBXdoKnQl2_zGEoIRgXAPfmOCgy_PDlr14G86iw1go5jJfxfpspZ9yzS5CzQHnAf1VObKVuyh3dDn-VDYywX94jFBU1rnBPumg-Or4JoCKHGbCAUJxHfS4DA6Dew9FN-YamSDcaBrACdHDIzAMOKYUaRx5SZ9JSeSpBQ5BLqDwwZYbsmlVhKJGCv2k9u48Xno3INy8R_GiVHLv0VRSWz0456ny8EByX3u3hWjCLfCKLGHVxbC36xkZ0taO4nrY1bfIoA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+<div class="absolute top-3 left-3 flex gap-1">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></div>
+<span class="text-[8px] font-bold uppercase tracking-widest bg-primary-container/20 backdrop-blur-md px-1.5 py-0.5 rounded">LIVE</span>
+</div>
+<div class="absolute bottom-3 left-3">
+<p class="text-[10px] font-bold uppercase tracking-widest text-secondary mb-0.5">Power Plant</p>
+<p class="text-xs font-bold leading-tight">Midnight Heat Wave</p>
+</div>
+</div>
+<div class="min-w-[160px] h-64 bg-surface-container-low rounded-xl relative overflow-hidden group cursor-pointer border border-outline-variant/10">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXRHW0Qzw2-lQW5P4oCwFeBSX-VDH2d2woJaidmTp4-iscuuhE--J8wIw8gluJcqfAFf0idSG6VMvmW3jT8ffQRPn7CQTWatMoFnAuCiLPvBoch7rkJsH7_hj-vS4ZB69KH-7l-zxZr00aDKREf-9AP-zzyojULf-4LU05kSu63pbh-gKsyEGzkQcTfzISVrNtQG62ZKwiBWjQelrAnQVT7RaI2Yf7yJyh6prQyvlfE3b4CquQxXDsWrN5mSOntPo0GRey6Cl_4Mc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+<div class="absolute bottom-3 left-3">
+<p class="text-[10px] font-bold uppercase tracking-widest text-secondary mb-0.5">Fells Point</p>
+<p class="text-xs font-bold leading-tight">The Sagamore Lounge</p>
+</div>
+</div>
+<div class="min-w-[160px] h-64 bg-surface-container-low rounded-xl relative overflow-hidden group cursor-pointer border border-outline-variant/10">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlVHZTB-2VflEFXDJFjUcxjRAWLK_ANgSQpfOvfkN7jzNByzSMe7-fHtZbEzeU4wsmJ7hlGfOAQZ7-WTfg3IczZwxPwMmLAsSav6iz3Bg4D6-ESvWZQpb1yLhf0BwYxcx4wLbj4FyJLicV-l6Ila8fJitj2S2SxRA3w_a8TMcGNBc7uCd6VvoMRmxVSfpKkJjqiG3DEMv0CcVM4nmbbu9A2qPbzzJs8DSODJ-RNca8fYhXaRjt-Vrr2XLEEX1tFrzbj9Z-cTAeUrk"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+<div class="absolute bottom-3 left-3">
+<p class="text-[10px] font-bold uppercase tracking-widest text-secondary mb-0.5">Federal Hill</p>
+<p class="text-xs font-bold leading-tight">Rooftop Sessions</p>
+</div>
+</div>
+</div>
+</div>
+<!-- VIP Status Badge -->
+<div class="absolute top-24 right-6 z-20">
+<div class="glass-panel px-4 py-3 rounded-xl border border-secondary/20 flex flex-col items-end">
+<span class="text-[9px] font-black tracking-[.3em] text-secondary uppercase mb-1">Status</span>
+<div class="flex items-center gap-2">
+<span class="text-sm font-bold tracking-tight">GOLD MEMBER</span>
+<span class="material-symbols-outlined text-secondary text-lg" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+</div>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 w-full z-50 bg-[#131313]/80 backdrop-blur-2xl rounded-t-[1.5rem] flex justify-around items-center px-4 pb-6 pt-3 shadow-[0_-8px_32px_rgba(0,0,0,0.5)]">
+<a class="bg-[#ff5c00] text-white rounded-full p-3 shadow-[0_0_15px_rgba(255,92,0,0.4)] transition-all duration-300 ease-out" href="#"><span class="material-symbols-outlined block">map</span></a>
+<a class="text-[#e5e2e1]/40 p-3 hover:text-[#ffb59a] transition-all duration-300 ease-out" href="#"><span class="material-symbols-outlined block">layers</span></a>
+<a class="text-[#e5e2e1]/40 p-3 hover:text-[#ffb59a] transition-all duration-300 ease-out" href="#"><span class="material-symbols-outlined block">photo_camera</span></a>
+<a class="text-[#e5e2e1]/40 p-3 hover:text-[#ffb59a] transition-all duration-300 ease-out" href="#"><span class="material-symbols-outlined block">military_tech</span></a>
+<a class="text-[#e5e2e1]/40 p-3 hover:text-[#ffb59a] transition-all duration-300 ease-out" href="#"><span class="material-symbols-outlined block">person</span></a>
+</nav>
+</body></html>

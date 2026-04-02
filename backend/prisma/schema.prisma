@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String    @id @default(uuid())
+  cognitoId        String    @unique
+  username         String    @unique
+  displayName      String
+  avatar           String?
+  authProvider     String
+  role             Role      @default(USER)
+  xp               Int       @default(0)
+  level            Int       @default(1)
+  homeNeighborhood String?
+  ageVerified      Boolean   @default(false)
+  subscriptionTier String    @default("free")
+  stripeCustomerId String?
+  pushToken        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  checkIns         CheckIn[]
+  userBadges       UserBadge[]
+  videos           Video[]
+  stories          Story[]
+  vouchers         Voucher[]
+  crawlProgress    CrawlProgress[]
+  following        Follow[]  @relation("follower")
+  followers        Follow[]  @relation("following")
+}
+
+model Bar {
+  id               String    @id @default(uuid())
+  name             String
+  neighborhood     String
+  address          String
+  latitude         Float
+  longitude        Float
+  vibe             String
+  color            String
+  emoji            String    @default("🍺")
+  currentCrowd     Int       @default(0)
+  isVerified       Boolean   @default(false)
+  isActive         Boolean   @default(true)
+  licenseNumber    String?
+  ownerId          String?
+  subscriptionTier String    @default("free")
+  stripeSubId      String?
+  activeSpecials   Json      @default("[]")
+  badgeConfig      Json      @default("{}")
+  openHours        Json      @default("{}")
+  phoneNumber      String?
+  website          String?
+  instagramHandle  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  checkIns         CheckIn[]
+  badges           Badge[]
+  videos           Video[]
+  stories          Story[]
+  vouchers         Voucher[]
+  staff            BarStaff[]
+  crawlStops       CrawlStop[]
+}
+
+model CheckIn {
+  id           String   @id @default(uuid())
+  userId       String
+  barId        String
+  latitude     Float
+  longitude    Float
+  verified     Boolean  @default(false)
+  xpAwarded    Int      @default(0)
+  badgeAwarded Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+  bar          Bar      @relation(fields: [barId], references: [id])
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  barId       String
+  name        String
+  emoji       String
+  rarity      Rarity      @default(COMMON)
+  description String?
+  bar         Bar         @relation(fields: [barId], references: [id])
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id          String   @id @default(uuid())
+  userId      String
+  badgeId     String
+  collectedAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  badge       Badge    @relation(fields: [badgeId], references: [id])
+  @@unique([userId, badgeId])
+}
+
+model Video {
+  id           String      @id @default(uuid())
+  userId       String
+  barId        String
+  s3Key        String?
+  localPath    String?
+  thumbnailKey String?
+  duration     Int
+  views        Int         @default(0)
+  likes        Int         @default(0)
+  status       VideoStatus @default(PENDING)
+  expiresAt    DateTime?
+  createdAt    DateTime    @default(now())
+  user         User        @relation(fields: [userId], references: [id])
+  bar          Bar         @relation(fields: [barId], references: [id])
+}
+
+model Story {
+  id        String   @id @default(uuid())
+  userId    String
+  barId     String
+  mediaKey  String
+  views     Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  bar       Bar      @relation(fields: [barId], references: [id])
+}
+
+model Voucher {
+  id              String        @id @default(uuid())
+  barId           String
+  userId          String
+  type            String
+  value           Float
+  description     String
+  qrCode          String        @unique @default(uuid())
+  status          VoucherStatus @default(ACTIVE)
+  redeemedAt      DateTime?
+  redeemedByStaff String?
+  expiresAt       DateTime
+  createdAt       DateTime      @default(now())
+  user            User          @relation(fields: [userId], references: [id])
+  bar             Bar           @relation(fields: [barId], references: [id])
+}
+
+model CrawlRoute {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  totalXp     Int
+  isActive    Boolean         @default(true)
+  sponsorId   String?
+  createdAt   DateTime        @default(now())
+  stops       CrawlStop[]
+  progress    CrawlProgress[]
+}
+
+model CrawlStop {
+  id      String     @id @default(uuid())
+  routeId String
+  barId   String
+  order   Int
+  route   CrawlRoute @relation(fields: [routeId], references: [id])
+  bar     Bar        @relation(fields: [barId], references: [id])
+}
+
+model CrawlProgress {
+  id             String     @id @default(uuid())
+  userId         String
+  routeId        String
+  completedStops String[]   @default([])
+  isComplete     Boolean    @default(false)
+  completedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  user           User       @relation(fields: [userId], references: [id])
+  route          CrawlRoute @relation(fields: [routeId], references: [id])
+  @@unique([userId, routeId])
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("follower", fields: [followerId], references: [id])
+  following   User     @relation("following", fields: [followingId], references: [id])
+  @@unique([followerId, followingId])
+}
+
+model BarStaff {
+  id        String   @id @default(uuid())
+  barId     String
+  userId    String
+  role      String   @default("staff")
+  createdAt DateTime @default(now())
+  bar       Bar      @relation(fields: [barId], references: [id])
+}
+
+model MarketingCampaign {
+  id             String    @id @default(uuid())
+  type           String
+  platforms      String[]
+  budget         Float?
+  spent          Float     @default(0)
+  targetAudience Json      @default("{}")
+  content        Json      @default("{}")
+  status         String    @default("scheduled")
+  scheduledAt    DateTime?
+  metrics        Json      @default("{}")
+  createdAt      DateTime  @default(now())
+}
+
+enum Role {
+  USER
+  MANAGER
+  ADMIN
+}
+
+enum Rarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum VideoStatus {
+  PENDING
+  APPROVED
+  FLAGGED
+}
+
+enum VoucherStatus {
+  ACTIVE
+  REDEEMED
+  EXPIRED
+}

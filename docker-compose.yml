@@ -1,0 +1,97 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ccn_postgres
+    environment:
+      POSTGRES_DB: charmcitynights
+      POSTGRES_USER: ccn_user
+      POSTGRES_PASSWORD: ccn_password_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ccn_user -d charmcitynights"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ccn_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ccn_api
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://ccn_user:ccn_password_local@postgres:5432/charmcitynights
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+      PORT: 3000
+      CHECK_IN_RADIUS_FEET: 300
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ccn_worker
+    environment:
+      DATABASE_URL: postgresql://ccn_user:ccn_password_local@postgres:5432/charmcitynights
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    command: npm run worker
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ccn_pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@charmcity.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    depends_on:
+      - postgres
+
+  nginx:
+    image: nginx:alpine
+    container_name: ccn_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:

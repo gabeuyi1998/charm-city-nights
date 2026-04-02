@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "secondary": "#e9c349","on-error": "#690005","tertiary-container": "#c9a900",
+            "background": "#131313","error-container": "#93000a","tertiary": "#e9c400",
+            "surface-container-low": "#1c1b1b","primary": "#ffb59a","on-primary-container": "#521800",
+            "surface-container-lowest": "#0e0e0e","outline": "#ab897d","inverse-primary": "#a73a00",
+            "surface": "#131313","secondary-fixed": "#ffe088","on-error-container": "#ffdad6",
+            "surface-bright": "#3a3939","surface-variant": "#353534","surface-tint": "#ffb59a",
+            "on-secondary-container": "#342800","primary-fixed-dim": "#ffb59a",
+            "surface-container-highest": "#353534","on-surface-variant": "#e4beb1",
+            "secondary-container": "#af8d11","on-primary": "#5a1b00","error": "#ffb4ab",
+            "on-background": "#e5e2e1","on-secondary": "#3c2f00","on-surface": "#e5e2e1",
+            "inverse-surface": "#e5e2e1","outline-variant": "#5b4137","surface-container": "#201f1f",
+            "surface-container-high": "#2a2a2a","secondary-fixed-dim": "#e9c349",
+            "surface-dim": "#131313","primary-fixed": "#ffdbce","primary-container": "#ff5c00",
+            "inverse-on-surface": "#313030"
+          },
+          fontFamily: {"headline": ["Manrope"],"body": ["Manrope"],"label": ["Manrope"]},
+          borderRadius: {"DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","2xl": "1.5rem","full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .badge-grayscale { filter: grayscale(100%) contrast(0.8) brightness(0.6); }
+    .glass-card { background: rgba(53, 53, 52, 0.6); backdrop-filter: blur(20px); }
+    body { min-height: max(884px, 100dvh); }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<header class="fixed top-0 w-full z-50 bg-[#131313]/60 backdrop-blur-xl flex justify-between items-center px-6 h-16">
+<span class="material-symbols-outlined text-[#ff5c00] text-2xl">search</span>
+<h1 class="text-xl font-black uppercase tracking-widest text-[#ff5c00]">KINETIC LOUNGE</h1>
+<span class="material-symbols-outlined text-[#e5e2e1]/60 hover:text-[#ffb59a] transition-colors">notifications</span>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-5xl mx-auto">
+<!-- User Level & Progress -->
+<section class="mb-12">
+<div class="flex items-end justify-between mb-4">
+<div>
+<span class="text-secondary font-bold uppercase tracking-widest block mb-1 text-sm">Rank: Nightcrawler</span>
+<h2 class="text-5xl font-black text-on-surface tracking-tighter leading-none italic">LEVEL 24</h2>
+</div>
+<span class="text-on-surface/40 font-bold">1,450 / 2,000 XP</span>
+</div>
+<div class="h-3 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full w-[72.5%] bg-gradient-to-r from-primary-container to-primary shadow-[0_0_20px_rgba(255,92,0,0.5)]"></div>
+</div>
+</section>
+<!-- Rare Section -->
+<section class="mb-16">
+<div class="flex items-center gap-4 mb-8">
+<h3 class="text-2xl font-black tracking-tight uppercase text-secondary">Rare Collectibles</h3>
+<div class="h-[1px] flex-grow bg-outline-variant/20"></div>
+</div>
+<div class="relative group cursor-pointer">
+<div class="absolute -inset-1 bg-gradient-to-r from-secondary to-tertiary rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+<div class="relative glass-card border border-outline-variant/20 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-8">
+<div class="relative">
+<div class="w-32 h-32 rounded-full border-4 border-secondary p-1 bg-surface-container-lowest overflow-hidden">
+<img class="w-full h-full object-cover rounded-full" data-alt="Intricate gold trophy medal" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpJPcqP8UkvTnOl9CX7yb-wqRLJi6mO6czonSYgYklAWrtPCogW_hkmDHZSCF0D60oABo6zkNkxJ1KnJQ1rogWc_TA2lNO0TBxP4GQP1zKPA7_g43QvmOgcNw4CcFTBj-uHMqwqCjBbDlK0vHP8hin3JGjjVLOrtw6iVm3-QfDI1_COcKKjUTdILGSBk9bbPpjwiif1NPa_mO4XqClcuS1JumAyhIn3St_fMz4oUzt1hhCL50YJ6x5nzjF34UcMO0kPj8ZMX6UXkQ"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-secondary text-on-secondary px-3 py-1 rounded-full text-[10px] font-black uppercase">Legendary</div>
+</div>
+<div class="flex-grow text-center md:text-left">
+<h4 class="text-3xl font-extrabold text-on-surface mb-2 tracking-tight">Preakness Champion</h4>
+<p class="text-on-surface/60 max-w-lg mb-6">Earned by attending the 148th Preakness Stakes at Pimlico.</p>
+<div class="flex flex-wrap justify-center md:justify-start gap-4">
+<span class="px-4 py-2 bg-surface-container-high rounded-full border border-outline-variant/20 text-xs font-bold text-secondary uppercase tracking-widest">Global Rank: #142</span>
+<span class="px-4 py-2 bg-surface-container-high rounded-full border border-outline-variant/20 text-xs font-bold text-secondary uppercase tracking-widest">+500 Multiplier</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Badge Categories -->
+<div class="space-y-16">
+<section>
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold tracking-tight">BARS &amp; SPEAKEASIES</h3>
+<span class="text-xs font-bold text-primary-container tracking-widest">12 / 24 CAUGHT</span>
+</div>
+<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6">
+<div class="flex flex-col items-center group">
+<div class="w-20 h-20 rounded-full bg-surface-container-low border border-primary-container/30 flex items-center justify-center p-3 mb-3 shadow-[0_0_15px_rgba(255,92,0,0.1)] group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-primary-container text-3xl">local_bar</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight">The Horse You<br/>Came In On</span>
+</div>
+<div class="flex flex-col items-center group">
+<div class="w-20 h-20 rounded-full bg-surface-container-low border border-primary-container/30 flex items-center justify-center p-3 mb-3 shadow-[0_0_15px_rgba(255,92,0,0.1)] group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-primary-container text-3xl">liquor</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight">Bluebird Cocktail</span>
+</div>
+<div class="flex flex-col items-center group opacity-40">
+<div class="w-20 h-20 rounded-full bg-surface-container-low flex items-center justify-center p-3 mb-3 badge-grayscale border border-white/5"><span class="material-symbols-outlined text-on-surface/40 text-3xl">wine_bar</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight text-on-surface/40">Sugarvale Lounge</span>
+</div>
+<div class="flex flex-col items-center group opacity-40">
+<div class="w-20 h-20 rounded-full bg-surface-container-low flex items-center justify-center p-3 mb-3 badge-grayscale border border-white/5"><span class="material-symbols-outlined text-on-surface/40 text-3xl">sports_bar</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight text-on-surface/40">Max's Taphouse</span>
+</div>
+<div class="flex flex-col items-center group opacity-40">
+<div class="w-20 h-20 rounded-full bg-surface-container-low flex items-center justify-center p-3 mb-3 badge-grayscale border border-white/5"><span class="material-symbols-outlined text-on-surface/40 text-3xl">nightlife</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight text-on-surface/40">The Elk Room</span>
+</div>
+<div class="flex flex-col items-center group opacity-40">
+<div class="w-20 h-20 rounded-full bg-surface-container-low flex items-center justify-center p-3 mb-3 badge-grayscale border border-white/5"><span class="material-symbols-outlined text-on-surface/40 text-3xl">local_bar</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight text-on-surface/40">Clavel Mezcal</span>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold tracking-tight">ELITE CLUBS</h3>
+<span class="text-xs font-bold text-primary-container tracking-widest">3 / 8 CAUGHT</span>
+</div>
+<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6">
+<div class="flex flex-col items-center group">
+<div class="w-20 h-20 rounded-full bg-surface-container-low border border-primary-container/30 flex items-center justify-center p-3 mb-3 shadow-[0_0_15px_rgba(255,92,0,0.1)] group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-primary-container text-3xl">headphones</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight">The Paradox</span>
+</div>
+<div class="flex flex-col items-center group opacity-40">
+<div class="w-20 h-20 rounded-full bg-surface-container-low flex items-center justify-center p-3 mb-3 badge-grayscale border border-white/5"><span class="material-symbols-outlined text-on-surface/40 text-3xl">speaker</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight text-on-surface/40">Mosaic District</span>
+</div>
+<div class="flex flex-col items-center group opacity-40">
+<div class="w-20 h-20 rounded-full bg-surface-container-low flex items-center justify-center p-3 mb-3 badge-grayscale border border-white/5"><span class="material-symbols-outlined text-on-surface/40 text-3xl">music_note</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight text-on-surface/40">Power Plant</span>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold tracking-tight">BALTIMORE LANDMARKS</h3>
+<span class="text-xs font-bold text-primary-container tracking-widest">15 / 15 COMPLETE</span>
+</div>
+<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6">
+<div class="flex flex-col items-center group">
+<div class="w-20 h-20 rounded-full bg-surface-container-low border border-secondary/30 flex items-center justify-center p-3 mb-3 shadow-[0_0_15px_rgba(233,195,73,0.2)] group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-secondary text-3xl">sailing</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight">Inner Harbor</span>
+</div>
+<div class="flex flex-col items-center group">
+<div class="w-20 h-20 rounded-full bg-surface-container-low border border-secondary/30 flex items-center justify-center p-3 mb-3 shadow-[0_0_15px_rgba(233,195,73,0.2)] group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-secondary text-3xl">castle</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight">Fort McHenry</span>
+</div>
+<div class="flex flex-col items-center group">
+<div class="w-20 h-20 rounded-full bg-surface-container-low border border-secondary/30 flex items-center justify-center p-3 mb-3 shadow-[0_0_15px_rgba(233,195,73,0.2)] group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-secondary text-3xl">anchor</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight">Fells Point</span>
+</div>
+<div class="flex flex-col items-center group">
+<div class="w-20 h-20 rounded-full bg-surface-container-low border border-secondary/30 flex items-center justify-center p-3 mb-3 shadow-[0_0_15px_rgba(233,195,73,0.2)] group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-secondary text-3xl">stadium</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight">Camden Yards</span>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold tracking-tight">SPECIAL EVENTS</h3>
+<span class="text-xs font-bold text-primary-container tracking-widest">4 / 10 CAUGHT</span>
+</div>
+<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6">
+<div class="flex flex-col items-center group">
+<div class="w-20 h-20 rounded-full bg-surface-container-low border border-primary-container/30 flex items-center justify-center p-3 mb-3 shadow-[0_0_15px_rgba(255,92,0,0.1)] group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-primary-container text-3xl">festival</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight">Artscape 2023</span>
+</div>
+<div class="flex flex-col items-center group">
+<div class="w-20 h-20 rounded-full bg-surface-container-low border border-primary-container/30 flex items-center justify-center p-3 mb-3 shadow-[0_0_15px_rgba(255,92,0,0.1)] group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-primary-container text-3xl">celebration</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight">Lighting of Mon.</span>
+</div>
+<div class="flex flex-col items-center group opacity-40">
+<div class="w-20 h-20 rounded-full bg-surface-container-low flex items-center justify-center p-3 mb-3 badge-grayscale border border-white/5"><span class="material-symbols-outlined text-on-surface/40 text-3xl">restaurant</span></div>
+<span class="text-[10px] font-black uppercase tracking-tighter text-center leading-tight text-on-surface/40">Crab Feast</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+<nav class="fixed bottom-0 w-full z-50 rounded-t-[1.5rem] bg-[#131313]/80 backdrop-blur-2xl flex justify-around items-center px-4 pb-6 pt-3 shadow-[0_-8px_32px_rgba(0,0,0,0.5)]">
+<div class="text-[#e5e2e1]/40 p-3 hover:text-[#ffb59a] transition-all duration-300 ease-out"><span class="material-symbols-outlined text-2xl">map</span></div>
+<div class="text-[#e5e2e1]/40 p-3 hover:text-[#ffb59a] transition-all duration-300 ease-out"><span class="material-symbols-outlined text-2xl">layers</span></div>
+<div class="text-[#e5e2e1]/40 p-3 hover:text-[#ffb59a] transition-all duration-300 ease-out"><span class="material-symbols-outlined text-2xl">photo_camera</span></div>
+<div class="bg-[#ff5c00] text-white rounded-full p-3 shadow-[0_0_15px_rgba(255,92,0,0.4)] transition-all duration-300 ease-out"><span class="material-symbols-outlined text-2xl">military_tech</span></div>
+<div class="text-[#e5e2e1]/40 p-3 hover:text-[#ffb59a] transition-all duration-300 ease-out"><span class="material-symbols-outlined text-2xl">person</span></div>
+</nav>
+</body></html>
