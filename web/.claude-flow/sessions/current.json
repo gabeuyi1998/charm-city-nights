@@ -1,0 +1,20 @@
+{
+  "id": "session-1775137225631",
+  "startedAt": "2026-04-02T13:40:25.631Z",
+  "cwd": "/Users/gabrielonyijen/charm-city-nights/web",
+  "context": {
+    "lastMatchedPatterns": [
+      "mem-project_charm_city_nights----",
+      "mem-MEMORY-memory-index",
+      "mem-feedback_reanimated_v4_expo_fix----",
+      "insight-1775137164053-15qo"
+    ]
+  },
+  "metrics": {
+    "edits": 14,
+    "commands": 0,
+    "tasks": 0,
+    "errors": 0
+  },
+  "updatedAt": "2026-04-02T14:58:29.437Z"
+}
