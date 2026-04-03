@@ -53,7 +53,6 @@ model Bar {
   ownerId          String?
   subscriptionTier String    @default("free")
   stripeSubId      String?
-  activeSpecials   Json      @default("[]")
   badgeConfig      Json      @default("{}")
   openHours        Json      @default("{}")
   phoneNumber      String?
@@ -68,6 +67,16 @@ model Bar {
   vouchers         Voucher[]
   staff            BarStaff[]
   crawlStops       CrawlStop[]
+  specials         Special[]
+}
+
+model Special {
+  id        String   @id @default(uuid())
+  barId     String
+  text      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  bar       Bar      @relation(fields: [barId], references: [id])
 }
 
 model CheckIn {
