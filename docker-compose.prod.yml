@@ -10,14 +10,6 @@ services:
     volumes:
       - uploads:/app/uploads
 
-  worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    command: node dist/worker.js
-    env_file: .env.production
-    restart: always
-
   redis:
     image: redis:7-alpine
     restart: always
@@ -37,6 +29,7 @@ services:
     environment:
       CCN_SERVICE: worker
       REDIS_URL: redis://redis:6379
+      CCN_API_URL: http://api:3000
     restart: always
     depends_on:
       redis:
@@ -50,6 +43,7 @@ services:
     environment:
       CCN_SERVICE: webhook
       REDIS_URL: redis://redis:6379
+      CCN_API_URL: http://api:3000
     restart: always
     depends_on:
       redis:

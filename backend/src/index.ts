@@ -15,6 +15,7 @@ import usersRouter from './routes/users';
 import badgesRouter from './routes/badges';
 import managerRouter from './routes/manager';
 import prisma from './lib/prisma';
+import './workers/voucherExpiry';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -65,6 +66,8 @@ const PORT = process.env.PORT ?? 3000;
 
 httpServer.listen(PORT, () => {
   console.log(`🦀 Charm City Nights API running on port ${PORT}`);
+  // Start crowd updater after server is ready (needs io)
+  import('./workers/crowdUpdater').catch(console.error);
 });
 
 process.on('SIGTERM', async () => {

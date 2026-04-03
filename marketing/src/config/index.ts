@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { z } from 'zod';
 
 const schema = z.object({
-  anthropicApiKey: z.string().min(1),
+  anthropicApiKey: z.string().default(''),
   openaiApiKey: z.string().optional(),
   instagramAccessToken: z.string().optional(),
   instagramAccountId: z.string().optional(),
