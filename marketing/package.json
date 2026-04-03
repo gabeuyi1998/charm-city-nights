@@ -1,0 +1,32 @@
+{
+  "name": "ccn-marketing",
+  "version": "1.0.0",
+  "description": "Charm City Nights — Autonomous Marketing System",
+  "type": "module",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "queue": "tsx src/workers/queue-worker.ts",
+    "analytics": "tsx src/workers/analytics-worker.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "openai": "^4.77.0",
+    "bullmq": "^5.13.0",
+    "ioredis": "^5.3.2",
+    "axios": "^1.6.8",
+    "cheerio": "^1.0.0",
+    "sharp": "^0.33.3",
+    "uuid": "^9.0.1",
+    "date-fns": "^3.6.0",
+    "winston": "^3.13.0",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "~5.4.5",
+    "tsx": "^4.11.0",
+    "@types/node": "^20.12.12"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "name": "CCN DM Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-user",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "New User Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "ccn-new-user"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.all()[0].json.body ?? $input.all()[0].json;\nconst user = {\n  id: body.id ?? body.userId ?? null,\n  name: body.name ?? body.username ?? 'there',\n  email: body.email ?? null,\n  leadType: body.leadType ?? body.lead_type ?? 'new_user',\n  source: body.source ?? 'unknown',\n  joinedAt: body.joinedAt ?? body.created_at ?? new Date().toISOString()\n};\nreturn [{ json: user }];"
+      },
+      "id": "code-extract",
+      "name": "Extract User Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/generate-dm",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "leadType", "value": "={{ $json.leadType }}" },
+            { "name": "name", "value": "={{ $json.name }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-generate-dm",
+      "name": "Generate DM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "New User Webhook": {
+      "main": [
+        [{ "node": "Extract User Data", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract User Data": {
+      "main": [
+        [{ "node": "Generate DM", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generate DM": {
+      "main": [
+        [{ "node": "Webhook Response", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "id": "ccn-dm-automation"
+}

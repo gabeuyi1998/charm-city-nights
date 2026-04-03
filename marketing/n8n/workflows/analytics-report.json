@@ -1,0 +1,82 @@
+{
+  "name": "CCN Analytics Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "59 23 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-analytics",
+      "name": "Daily Report Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/analytics-report",
+        "options": {}
+      },
+      "id": "http-analytics",
+      "name": "Fetch Analytics Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const report = $input.all()[0].json;\nconst date = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });\n\nconst lines = [\n  `**CCN Daily Analytics — ${date}**`,\n  '',\n  `Impressions: ${report.impressions ?? 'N/A'}`,\n  `Reach: ${report.reach ?? 'N/A'}`,\n  `Engagement Rate: ${report.engagementRate ?? 'N/A'}`,\n  `Followers Gained: ${report.followersGained ?? 'N/A'}`,\n  `Top Post: ${report.topPost?.caption ?? 'N/A'}`,\n  `DMs Sent: ${report.dmsSent ?? 'N/A'}`,\n  `Bars Featured: ${report.barsFeatured ?? 'N/A'}`,\n  '',\n  report.notes ? `Notes: ${report.notes}` : ''\n].filter(Boolean);\n\nconst content = lines.join('\\n');\nreturn [{ json: { content, report, date } }];"
+      },
+      "id": "code-format",
+      "name": "Format Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://discord.com/api/webhooks/PLACEHOLDER_WEBHOOK_ID/PLACEHOLDER_WEBHOOK_TOKEN",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "content", "value": "={{ $json.content }}" },
+            { "name": "username", "value": "CCN Analytics Bot" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-discord",
+      "name": "Post to Discord",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Daily Report Trigger": {
+      "main": [
+        [{ "node": "Fetch Analytics Report", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Analytics Report": {
+      "main": [
+        [{ "node": "Format Report", "type": "main", "index": 0 }]
+      ]
+    },
+    "Format Report": {
+      "main": [
+        [{ "node": "Post to Discord", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "id": "ccn-analytics-report"
+}

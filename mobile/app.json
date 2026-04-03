@@ -15,7 +15,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.gabe.charmcitynights"
+      "bundleIdentifier": "com.gabe.charmcitynights",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Charm City Nights needs camera access to capture your nights out.",
+        "NSMicrophoneUsageDescription": "Charm City Nights needs microphone access to record video stories.",
+        "NSPhotoLibraryUsageDescription": "Charm City Nights needs photo library access to save your captured moments."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,7 +31,10 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.CAMERA"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "package": "com.gabe.charmcitynights"
     },
@@ -40,9 +48,18 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Charm City Nights to access your camera to capture moments at your favorite venues."
+          "cameraPermission": "Allow Charm City Nights to access your camera to capture moments at your favorite venues.",
+          "microphonePermission": "Allow Charm City Nights to access your microphone to record video stories."
         }
       ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Charm City Nights to save your captured moments to your photo library.",
+          "savePhotosPermission": "Allow Charm City Nights to save photos and videos."
+        }
+      ],
+      "expo-av",
       [
         "expo-location",
         {

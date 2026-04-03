@@ -18,5 +18,43 @@ services:
     env_file: .env.production
     restart: always
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  marketing-worker:
+    build:
+      context: ./marketing
+      dockerfile: Dockerfile
+    env_file: .env.production
+    environment:
+      CCN_SERVICE: worker
+      REDIS_URL: redis://redis:6379
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  marketing-webhook:
+    build:
+      context: ./marketing
+      dockerfile: Dockerfile
+    env_file: .env.production
+    environment:
+      CCN_SERVICE: webhook
+      REDIS_URL: redis://redis:6379
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   uploads:
+  redis-data:

@@ -1,0 +1,163 @@
+{
+  "name": "CCN Daily Content Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 21 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-1",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://44.198.64.160:3000/api/bars",
+        "options": {}
+      },
+      "id": "http-bars",
+      "name": "Fetch Hot Bars",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const bars = $input.all()[0].json;\nconst hot = Array.isArray(bars) ? bars.filter(b => b.currentCrowd > 60).slice(0, 3) : [];\nreturn hot.map(b => ({ json: b }));"
+      },
+      "id": "code-filter",
+      "name": "Filter Hot Bars",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/generate-content",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "bar", "value": "={{ $json }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-content",
+      "name": "Generate Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.caption }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-content",
+      "name": "Content Generated?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/post-instagram",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "content", "value": "={{ $json }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-instagram",
+      "name": "Post to Instagram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://hooks.slack.com/services/PLACEHOLDER/PLACEHOLDER/PLACEHOLDER",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=CCN Daily Post Published: {{ $json.caption ?? 'No caption' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-notify",
+      "name": "Notify Discord/Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 200]
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [{ "node": "Fetch Hot Bars", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Hot Bars": {
+      "main": [
+        [{ "node": "Filter Hot Bars", "type": "main", "index": 0 }]
+      ]
+    },
+    "Filter Hot Bars": {
+      "main": [
+        [{ "node": "Generate Content", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generate Content": {
+      "main": [
+        [{ "node": "Content Generated?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Content Generated?": {
+      "main": [
+        [{ "node": "Post to Instagram", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Post to Instagram": {
+      "main": [
+        [{ "node": "Notify Discord/Slack", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "id": "ccn-daily-content"
+}

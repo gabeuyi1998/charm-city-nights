@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'marketing/**'
       - 'docker-compose.prod.yml'
       - 'Caddyfile'
 
