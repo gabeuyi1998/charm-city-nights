@@ -47,6 +47,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Allow runner IP in EC2 security group
+        id: sg
+        run: |
+          RUNNER_IP=$(curl -sf https://checkip.amazonaws.com)
+          echo "runner_ip=${RUNNER_IP}" >> $GITHUB_OUTPUT
+          aws ec2 authorize-security-group-ingress \
+            --group-id sg-06f3d7ce56710cd48 \
+            --protocol tcp --port 22 \
+            --cidr ${RUNNER_IP}/32 || true
+
       - name: Deploy to EC2
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -56,3 +74,11 @@ jobs:
           chmod 600 /tmp/deploy_key
           SSH_KEY_PATH=/tmp/deploy_key EC2_IP=$EC2_IP bash scripts/deploy.sh
           rm -f /tmp/deploy_key
+
+      - name: Revoke runner IP from security group
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id sg-06f3d7ce56710cd48 \
+            --protocol tcp --port 22 \
+            --cidr ${{ steps.sg.outputs.runner_ip }}/32 || true
