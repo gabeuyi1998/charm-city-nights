@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express';
 import jwksClient from 'jwks-rsa';
 import jwt from 'jsonwebtoken';
 import { AuthRequest, AuthUser } from '../types';
+import prisma from '../lib/prisma';
 
 const client = jwksClient({
   jwksUri: `https://cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}/.well-known/jwks.json`,
@@ -39,20 +40,27 @@ export function verifyToken(
     return;
   }
 
-  jwt.verify(token, getKey, { algorithms: ['RS256'] }, (err, decoded) => {
+  jwt.verify(token, getKey, { algorithms: ['RS256'] }, async (err, decoded) => {
     if (err || !decoded || typeof decoded === 'string') {
       res.status(401).json({ error: 'Invalid or expired token' });
       return;
     }
 
     const payload = decoded as jwt.JwtPayload;
-    req.user = {
-      id: payload['custom:dbId'] as string || payload.sub as string,
-      cognitoId: payload.sub as string,
-      role: (payload['custom:role'] as AuthUser['role']) || 'USER',
-      username: (payload['cognito:username'] as string) || payload.sub as string,
-    };
-    next();
+    const cognitoId = payload.sub as string;
+
+    try {
+      const dbUser = await prisma.user.findUnique({ where: { cognitoId } });
+      req.user = {
+        id: dbUser?.id ?? cognitoId,
+        cognitoId,
+        role: (dbUser?.role as AuthUser['role']) ?? 'USER',
+        username: dbUser?.username ?? ((payload['cognito:username'] as string) || cognitoId),
+      };
+      next();
+    } catch {
+      res.status(500).json({ error: 'Auth lookup failed' });
+    }
   });
 }
 
