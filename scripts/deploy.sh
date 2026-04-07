@@ -12,6 +12,7 @@ ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no ec2-user@"$EC2_IP" "
   git pull origin main
   DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME} docker compose -f docker-compose.prod.yml pull api
   DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME} docker compose -f docker-compose.prod.yml up -d --no-build
+  docker compose -f docker-compose.prod.yml restart caddy
   docker system prune -f
 "
 
