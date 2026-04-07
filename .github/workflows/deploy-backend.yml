@@ -8,6 +8,7 @@ on:
       - 'marketing/**'
       - 'docker-compose.prod.yml'
       - 'Caddyfile'
+      - 'scripts/**'
 
 jobs:
   lint:
