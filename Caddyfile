@@ -2,3 +2,4 @@ api.mtvgabe.com {
   reverse_proxy /hooks/* marketing-webhook:3001
   reverse_proxy api:3000
 }
+
