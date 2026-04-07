@@ -8,6 +8,19 @@ services:
     volumes:
       - uploads:/app/uploads
 
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+
   redis:
     image: redis:7-alpine
     restart: always
@@ -50,3 +63,5 @@ services:
 volumes:
   uploads:
   redis-data:
+  caddy-data:
+  caddy-config:
