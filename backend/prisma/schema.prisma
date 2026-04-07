@@ -11,6 +11,7 @@ model User {
   cognitoId        String    @unique
   username         String    @unique
   displayName      String
+  bio              String?
   avatar           String?
   authProvider     String
   role             Role      @default(USER)

@@ -5,6 +5,24 @@ import prisma from '../lib/prisma';
 
 const router = Router();
 
+// PATCH /api/users/me
+router.patch('/me', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { displayName, bio } = req.body as { displayName?: string; bio?: string };
+    const user = await prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        ...(displayName !== undefined && { displayName }),
+        ...(bio !== undefined && { bio }),
+      },
+    });
+    res.json({ data: user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // PATCH /api/users/onboard
 router.patch('/onboard', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
