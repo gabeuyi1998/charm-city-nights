@@ -69,10 +69,11 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           EC2_IP: ${{ secrets.EC2_IP }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           echo "$SSH_KEY" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
-          SSH_KEY_PATH=/tmp/deploy_key EC2_IP=$EC2_IP bash scripts/deploy.sh
+          SSH_KEY_PATH=/tmp/deploy_key EC2_IP=$EC2_IP DOCKERHUB_USERNAME=$DOCKERHUB_USERNAME bash scripts/deploy.sh
           rm -f /tmp/deploy_key
 
       - name: Revoke runner IP from security group

@@ -10,7 +10,8 @@ ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no ec2-user@"$EC2_IP" "
   set -e
   cd /app/charm-city-nights
   git pull origin main
-  docker compose -f docker-compose.prod.yml up -d --build
+  DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME} docker compose -f docker-compose.prod.yml pull api
+  DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME} docker compose -f docker-compose.prod.yml up -d --no-build
   docker system prune -f
 "
 
