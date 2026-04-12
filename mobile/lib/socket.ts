@@ -1,5 +1,5 @@
 // Lightweight Socket.io v4 client over native WebSocket
-// Only handles the events we need: crowd:update, checkin
+// Handles events: crowd:update, notification:new
 
 const _base = process.env.EXPO_PUBLIC_SOCKET_URL ?? 'ws://localhost:3000';
 const SOCKET_URL = `${_base}/socket.io/?EIO=4&transport=websocket`;
@@ -7,8 +7,12 @@ const SOCKET_URL = `${_base}/socket.io/?EIO=4&transport=websocket`;
 type CrowdUpdate = { barId: string; currentCrowd: number };
 type CrowdUpdateListener = (data: CrowdUpdate) => void;
 
+export type NotificationNew = { id: string; type: string; message: string };
+type NotificationNewListener = (data: NotificationNew) => void;
+
 let ws: WebSocket | null = null;
 const crowdListeners = new Set<CrowdUpdateListener>();
+const notifListeners = new Set<NotificationNewListener>();
 const subscribedBars = new Set<string>();
 
 function send(msg: string): void {
@@ -42,6 +46,9 @@ function connect(): void {
       if (event === 'crowd:update') {
         const update = data as CrowdUpdate;
         crowdListeners.forEach((fn) => fn(update));
+      } else if (event === 'notification:new') {
+        const notif = data as NotificationNew;
+        notifListeners.forEach((fn) => fn(notif));
       }
     } catch {
       // ignore malformed frames
@@ -52,7 +59,7 @@ function connect(): void {
     ws = null;
     // Reconnect after 3s
     setTimeout(() => {
-      if (crowdListeners.size > 0) connect();
+      if (crowdListeners.size > 0 || notifListeners.size > 0) connect();
     }, 3000);
   };
 
@@ -83,6 +90,20 @@ export function subscribeCrowdUpdates(
     crowdListeners.delete(listener);
     if (crowdListeners.size === 0) {
       barIds.forEach(leaveBar);
+      if (notifListeners.size === 0) ws?.close();
+    }
+  };
+}
+
+export function subscribeNotifications(
+  listener: NotificationNewListener,
+): () => void {
+  connect();
+  notifListeners.add(listener);
+
+  return () => {
+    notifListeners.delete(listener);
+    if (notifListeners.size === 0 && crowdListeners.size === 0) {
       ws?.close();
     }
   };

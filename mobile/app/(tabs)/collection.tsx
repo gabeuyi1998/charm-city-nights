@@ -23,6 +23,8 @@ import { Colors, Fonts } from '../../constants/theme';
 import { XPBar } from '../../components/ui/XPBar';
 import { VAULT_ITEMS, MOCK_UNLOCKED_IDS } from '../../constants/vaultData';
 import type { VaultRarity } from '../../types/vault';
+import { router } from 'expo-router';
+import { getMe } from '../../lib/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -165,9 +167,16 @@ const PASSPORT_VENUES: VenuePassportEntry[] = [
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function PassportScreen(): React.ReactElement {
   const [unlockedIds] = useState<Set<string>>(new Set(MOCK_UNLOCKED_IDS));
-
-  const xpCurrent = 7400;
+  const [xpCurrent, setXpCurrent] = useState(7400);
+  const [level, setLevel] = useState(42);
   const xpMax = 10000;
+
+  useEffect(() => {
+    getMe().then((r) => {
+      setXpCurrent(r.data.xp);
+      setLevel(r.data.level);
+    }).catch(() => {});
+  }, []);
   const totalVaultItems = VAULT_ITEMS.length;
   const totalUnlocked = VAULT_ITEMS.filter((i) => unlockedIds.has(i.id)).length;
 
@@ -183,17 +192,28 @@ export default function PassportScreen(): React.ReactElement {
           </View>
           <View style={styles.levelPill}>
             <Ionicons name="trophy" size={14} color={Colors.secondary} />
-            <Text style={styles.levelPillText}>LVL 42</Text>
+            <Text style={styles.levelPillText}>LVL {level}</Text>
           </View>
         </View>
 
         {/* ── XP Bar ── */}
         <View style={styles.xpSection}>
-          <XPBar current={xpCurrent} max={xpMax} rank="Nightcrawler" level={42} animate style={styles.xpBar} />
+          <XPBar current={xpCurrent} max={xpMax} rank="Nightcrawler" level={level} animate style={styles.xpBar} />
           <View style={styles.xpRow}>
             <Text style={styles.xpLabel}>{xpCurrent.toLocaleString()} / {xpMax.toLocaleString()} XP</Text>
             <Text style={styles.xpLabel}>{totalUnlocked}/{totalVaultItems} vault items</Text>
           </View>
+          <Pressable
+            style={styles.leaderboardButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/leaderboard');
+            }}
+          >
+            <Ionicons name="trophy-outline" size={14} color={Colors.secondary} />
+            <Text style={styles.leaderboardButtonText}>LEADERBOARD</Text>
+            <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+          </Pressable>
         </View>
 
         {/* ── Legendary Find ── */}
@@ -268,6 +288,25 @@ const styles = StyleSheet.create({
   },
   levelPillText: { fontFamily: Fonts.label, fontSize: 14, color: Colors.textPrimary },
 
+  leaderboardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: 'rgba(233,195,73,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(233,195,73,0.15)',
+  },
+  leaderboardButtonText: {
+    flex: 1,
+    fontFamily: Fonts.label,
+    fontSize: 11,
+    color: Colors.secondary,
+    letterSpacing: 2,
+  },
   xpSection: { paddingHorizontal: 24, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
   xpBar: { marginBottom: 8 },
   xpRow: { flexDirection: 'row', justifyContent: 'space-between' },

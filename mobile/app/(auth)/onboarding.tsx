@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Colors, Fonts } from '../../constants/theme';
 import { Button } from '../../components/ui';
+import { onboardUser } from '../../lib/api';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -304,15 +305,25 @@ export default function OnboardingScreen(): React.ReactElement {
     (step === 1 && name.trim().length === 0) ||
     (step === 3 && !ageConfirmed);
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (step < TOTAL_STEPS) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setStep((s) => s + 1);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try {
+        await onboardUser({
+          displayName: name,
+          homeNeighborhood: neighborhood,
+          ageVerified: ageConfirmed,
+        });
+      } catch (e) {
+        // non-blocking — navigate anyway if onboard fails
+        console.warn('[onboarding] Failed to save:', e);
+      }
       router.replace('/(tabs)/');
     }
-  }, [step]);
+  }, [step, name, neighborhood, ageConfirmed]);
 
   const handleBack = useCallback(() => {
     if (step > 1) {

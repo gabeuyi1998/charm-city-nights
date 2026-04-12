@@ -69,6 +69,35 @@ model Bar {
   staff            BarStaff[]
   crawlStops       CrawlStop[]
   specials         Special[]
+  ambassadors      BrandAmbassador[]
+  events           BarEvent[]
+}
+
+model BrandAmbassador {
+  id              String   @id @default(uuid())
+  barId           String
+  name            String
+  role            String   @default("Brand Ambassador")
+  instagramHandle String?
+  avatarInitials  String
+  avatarColor     String   @default("#FF5C00")
+  isActive        Boolean  @default(true)
+  bio             String?
+  createdAt       DateTime @default(now())
+  bar             Bar      @relation(fields: [barId], references: [id])
+}
+
+model BarEvent {
+  id          String   @id @default(uuid())
+  barId       String
+  title       String
+  description String?
+  eventType   String   @default("performance")
+  startsAt    DateTime
+  endsAt      DateTime?
+  performer   String?
+  createdAt   DateTime @default(now())
+  bar         Bar      @relation(fields: [barId], references: [id])
 }
 
 model Special {

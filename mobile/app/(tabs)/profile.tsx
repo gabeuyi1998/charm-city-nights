@@ -18,7 +18,8 @@ import { Button } from '../../components/ui/Button';
 import { BadgeCard } from '../../components/ui/BadgeCard';
 import { Colors, BadgeRarity as BadgeRarityColors, Fonts } from '../../constants/theme';
 import type { RarityLevel } from '../../components/ui/BadgeCard';
-import { getMe, getBadges, UserProfile, Badge } from '../../lib/api';
+import { router } from 'expo-router';
+import { getMe, getBadges, clearToken, UserProfile, Badge } from '../../lib/api';
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 
@@ -90,22 +91,29 @@ export default function ProfileScreen(): React.ReactElement {
   const [activeTab, setActiveTab] = useState<ActiveTab>('badges');
   const [selectedBadge, setSelectedBadge] = useState<BadgeData | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [badges, setBadges] = useState<BadgeData[]>(MOCK_BADGES);
+  const [badges, setBadges] = useState<BadgeData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const bottomSheetRef = useRef<BottomSheetLib>(null);
   const snapPoints = useMemo(() => ['45%', '75%'], []);
 
   useEffect(() => {
-    getMe().then((r) => setUser(r.data)).catch(() => {});
-    getBadges().then((r) => {
-      setBadges(r.data.map((b: Badge) => ({
-        id: b.id,
-        emoji: b.emoji,
-        name: b.name,
-        rarity: b.rarity as RarityLevel,
-        barName: b.barName,
-        isCollected: b.isCollected,
-      })));
-    }).catch(() => {});
+    setLoading(true);
+    Promise.all([
+      getMe().then((r) => setUser(r.data)),
+      getBadges().then((r) => {
+        setBadges(r.data.map((b: Badge) => ({
+          id: b.id,
+          emoji: b.emoji,
+          name: b.name,
+          rarity: b.rarity as RarityLevel,
+          barName: b.barName,
+          isCollected: b.isCollected,
+        })));
+      }),
+    ])
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleBadgePress = useCallback((badge: BadgeData) => {
@@ -157,19 +165,19 @@ export default function ProfileScreen(): React.ReactElement {
         {/* Top Nav */}
         <View style={styles.topNav}>
           <View style={styles.topNavPlaceholder} />
-          <Text style={styles.usernameText}>{user?.username ?? MOCK_USER.username}</Text>
+          <Text style={styles.usernameText}>{user?.username ?? ''}</Text>
           <Pressable
             style={styles.menuBtn}
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-            accessibilityLabel="Menu"
+            onPress={async () => { await clearToken(); router.replace('/(auth)/'); }}
+            accessibilityLabel="Log out"
           >
-            <Ionicons name="menu-outline" size={26} color="#FFFFFF" />
+            <Ionicons name="log-out-outline" size={22} color={Colors.textMuted} />
           </Pressable>
         </View>
 
         {/* Profile Header */}
         <View style={styles.profileHeader}>
-          {MOCK_USER.hasStory ? (
+          {false ? (
             <LinearGradient
               colors={['#FF6B35', '#FFD700', '#FF3366']}
               start={{ x: 0, y: 0 }}
@@ -188,14 +196,14 @@ export default function ProfileScreen(): React.ReactElement {
             </View>
           )}
 
-          <Text style={styles.displayName}>{user?.displayName ?? MOCK_USER.displayName}</Text>
-          <Text style={styles.bioText}>{user?.bio ?? MOCK_USER.bio}</Text>
+          <Text style={styles.displayName}>{user?.displayName ?? ''}</Text>
+          <Text style={styles.bioText}>{user?.bio ?? ''}</Text>
           <View style={styles.editButtonWrap}>
             <Button
               label="EDIT PROFILE"
               variant="outline"
               size="md"
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+              onPress={() => router.push('/edit-profile')}
             />
           </View>
         </View>
@@ -203,10 +211,10 @@ export default function ProfileScreen(): React.ReactElement {
         {/* Stats Row */}
         <View style={styles.statsRow}>
           {[
-            { value: user?.barsVisited ?? MOCK_USER.barsVisited, label: 'BARS' },
-            { value: user?.badgesCollected ?? MOCK_USER.badgesCollected, label: 'BADGES' },
-            { value: user?.following ?? MOCK_USER.following, label: 'FOLLOWING', pressable: true },
-            { value: user?.followers ?? MOCK_USER.followers, label: 'FOLLOWERS', pressable: true },
+            { value: user?.barsVisited ?? 0, label: 'BARS' },
+            { value: user?.badgesCollected ?? 0, label: 'BADGES' },
+            { value: user?.following ?? 0, label: 'FOLLOWING', pressable: true },
+            { value: user?.followers ?? 0, label: 'FOLLOWERS', pressable: true },
           ].map((stat, idx) => (
             <Pressable
               key={stat.label}
@@ -277,15 +285,20 @@ export default function ProfileScreen(): React.ReactElement {
 
         {/* Tab Content */}
         {activeTab === 'badges' && (
-          <FlatList
-            data={badges}
-            keyExtractor={(item) => item.id}
-            numColumns={3}
-            scrollEnabled={false}
-            renderItem={renderBadge}
-            columnWrapperStyle={styles.badgeColumnWrapper}
-            ItemSeparatorComponent={() => <View style={{ height: 2 }} />}
-          />
+          <>
+            <FlatList
+              data={badges}
+              keyExtractor={(item) => item.id}
+              numColumns={3}
+              scrollEnabled={false}
+              renderItem={renderBadge}
+              columnWrapperStyle={styles.badgeColumnWrapper}
+              ItemSeparatorComponent={() => <View style={{ height: 2 }} />}
+            />
+            {badges.length === 0 && (
+              <Text style={styles.emptyText}>No badges yet. Start checking in!</Text>
+            )}
+          </>
         )}
 
         {activeTab === 'videos' && (
@@ -550,6 +563,12 @@ const styles = StyleSheet.create({
   // Badge grid
   badgeColumnWrapper: {
     gap: 2,
+  },
+  emptyText: {
+    color: Colors.textMuted,
+    fontFamily: Fonts.body,
+    textAlign: 'center',
+    marginTop: 40,
   },
 
   // Videos

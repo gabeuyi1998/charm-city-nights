@@ -6,7 +6,11 @@ set -e
 
 echo "Deploying to $EC2_IP..."
 
-ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no ec2-user@"$EC2_IP" "
+ssh -i "$SSH_KEY_PATH" \
+  -o StrictHostKeyChecking=no \
+  -o ServerAliveInterval=60 \
+  -o ServerAliveCountMax=10 \
+  ec2-user@"$EC2_IP" "
   set -e
   cd /app/charm-city-nights
   git pull origin main

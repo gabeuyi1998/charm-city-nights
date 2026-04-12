@@ -14,6 +14,9 @@ import videosRouter from './routes/videos';
 import usersRouter from './routes/users';
 import badgesRouter from './routes/badges';
 import managerRouter from './routes/manager';
+import storiesRouter from './routes/stories';
+import leaderboardRouter from './routes/leaderboard';
+import discoverRouter from './routes/discover';
 import prisma from './lib/prisma';
 import './workers/voucherExpiry';
 
@@ -45,6 +48,9 @@ app.use('/api/videos', videosRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/badges', badgesRouter);
 app.use('/api/manager', managerRouter);
+app.use('/api/stories', storiesRouter);
+app.use('/api/leaderboard', leaderboardRouter);
+app.use('/api/discover', discoverRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });

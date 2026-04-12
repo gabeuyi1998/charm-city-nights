@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
   ListRenderItemInfo,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Colors, Fonts } from '../constants/theme';
+import { getDMs, Conversation as ApiConversation } from '../lib/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -29,16 +31,27 @@ interface Conversation {
 }
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Helpers
 // ---------------------------------------------------------------------------
 
-const MOCK_CONVERSATIONS: Conversation[] = [
-  { id: 'm1', name: 'canton_kate', lastMsg: "Are you at Moe's?", time: '2m', unread: 2 },
-  { id: 'm2', name: 'jmill_bmore', lastMsg: 'That crawl was 🔥', time: '1h', unread: 0 },
-  { id: 'm3', name: 'Power Plant Live', lastMsg: 'Flash deal tonight!', time: '3h', unread: 1, isBar: true },
-  { id: 'm4', name: 'bmore_legend', lastMsg: 'Race you to #1', time: '1d', unread: 0 },
-  { id: 'm5', name: 'harbor_hopper', lastMsg: 'Sticky Rice after?', time: '2d', unread: 0 },
-];
+function formatRelative(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
+}
+
+function mapApiConversation(c: ApiConversation): Conversation {
+  return {
+    id: c.id,
+    name: c.participant.displayName ?? c.participant.username,
+    lastMsg: c.lastMessage,
+    time: formatRelative(c.lastMessageAt),
+    unread: c.unreadCount,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Avatar helper
@@ -129,14 +142,23 @@ function ConvRow({ item, onPress }: ConvRowProps): React.ReactElement {
 
 export default function MessagesScreen(): React.ReactElement {
   const [searchQuery, setSearchQuery] = useState('');
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getDMs()
+      .then((r) => setConversations(r.data.map(mapApiConversation)))
+      .catch(() => setConversations([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = searchQuery.trim()
-    ? MOCK_CONVERSATIONS.filter(
+    ? conversations.filter(
         (c) =>
           c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           c.lastMsg.toLowerCase().includes(searchQuery.toLowerCase()),
       )
-    : MOCK_CONVERSATIONS;
+    : conversations;
 
   const handleConvPress = useCallback((item: Conversation) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -209,20 +231,24 @@ export default function MessagesScreen(): React.ReactElement {
       </View>
 
       {/* Conversation list */}
-      <FlatList
-        data={filtered}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateEmoji}>💬</Text>
-            <Text style={styles.emptyStateText}>No conversations found</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <ActivityIndicator color={Colors.primary} style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateEmoji}>💬</Text>
+              <Text style={styles.emptyStateText}>No conversations yet</Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }

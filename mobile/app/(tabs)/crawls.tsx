@@ -10,9 +10,11 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { Colors, Fonts } from '../../constants/theme';
 import { Button } from '../../components/ui';
-import { getCrawls, CrawlRoute as ApiCrawl } from '../../lib/api';
+import { ErrorRetry } from '../../components/ui/ErrorRetry';
+import { getCrawls, joinCrawl, CrawlRoute as ApiCrawl } from '../../lib/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -240,12 +242,22 @@ function ActiveCrawlBanner({ route }: ActiveCrawlBannerProps): React.ReactElemen
 
 interface RouteCardProps {
   route: Route;
+  onJoin: (id: string) => void;
 }
 
-function RouteCard({ route }: RouteCardProps): React.ReactElement {
+function RouteCard({ route, onJoin }: RouteCardProps): React.ReactElement {
   const handlePress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  }, []);
+    if (route.isJoined) {
+      const nextStop = route.stops.find((s) => !route.completedStops.includes(s));
+      if (nextStop) {
+        // Navigate to the first incomplete bar if we have bar IDs
+        router.push('/(tabs)/crawls' as never);
+      }
+    } else {
+      onJoin(route.id);
+    }
+  }, [route, onJoin]);
 
   return (
     <View
@@ -311,7 +323,7 @@ function RouteCard({ route }: RouteCardProps): React.ReactElement {
           label="START CRAWL"
           variant="outline"
           size="sm"
-          onPress={handlePress}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onJoin(route.id); }}
         />
       )}
     </View>
@@ -361,9 +373,11 @@ function VoucherCard({ voucher, onQRPress }: VoucherCardProps): React.ReactEleme
 export default function CrawlsScreen(): React.ReactElement {
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
-  const [routes, setRoutes] = useState<Route[]>(MOCK_ROUTES);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [crawlError, setCrawlError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchCrawls = useCallback(() => {
+    setCrawlError(null);
     getCrawls().then((r) => {
       const mapped: Route[] = r.data.map((c: ApiCrawl) => ({
         id: c.id,
@@ -380,10 +394,23 @@ export default function CrawlsScreen(): React.ReactElement {
         completedStops: c.stops.slice(0, c.progress?.[0]?.completedStops ?? 0).map((s) => s.bar.name),
       }));
       setRoutes(mapped);
-    }).catch(() => {});
+    }).catch((e: Error) => setCrawlError(e.message));
   }, []);
 
+  useEffect(() => { fetchCrawls(); }, [fetchCrawls]);
+
   const activeRoute = routes.find((r) => r.isJoined) ?? null;
+
+  const handleJoin = useCallback((crawlId: string) => {
+    joinCrawl(crawlId)
+      .then(() => {
+        setRoutes((prev) =>
+          prev.map((r) => (r.id === crawlId ? { ...r, isJoined: true } : r)),
+        );
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      })
+      .catch(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error));
+  }, []);
 
   const handleQRPress = useCallback((voucher: Voucher) => {
     setSelectedVoucher(voucher);
@@ -415,8 +442,18 @@ export default function CrawlsScreen(): React.ReactElement {
 
         {/* Routes section */}
         <Text style={styles.sectionTitle}>AVAILABLE ROUTES</Text>
+        {crawlError ? (
+          <Text style={{ color: '#FF5C00', paddingHorizontal: 16, marginBottom: 8, fontFamily: Fonts.body, fontSize: 13 }}>
+            Could not load crawls: {crawlError}
+          </Text>
+        ) : null}
+        {routes.length === 0 && !crawlError && (
+          <Text style={{ color: Colors.textMuted, fontFamily: Fonts.body, fontSize: 14, textAlign: 'center', marginTop: 24 }}>
+            No crawls available yet.
+          </Text>
+        )}
         {routes.map((route) => (
-          <RouteCard key={route.id} route={route} />
+          <RouteCard key={route.id} route={route} onJoin={handleJoin} />
         ))}
 
         {/* Vouchers section */}

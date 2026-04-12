@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Pressable,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import { Colors, Fonts, Layout } from '../../constants/theme';
 import { getBar, postCheckin, Bar as ApiBar } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
 import { VaultTab } from '../../components/ui/VaultTab';
+import { subscribeCrowdUpdates } from '../../lib/socket';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -51,6 +53,9 @@ export default function BarDetailScreen(): React.ReactElement {
   const [bar, setBar] = React.useState<ApiBar | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<'overview' | 'vault'>('overview');
+  const [xpToast, setXpToast] = React.useState<number | null>(null);
+  const xpOpacity = useRef(new Animated.Value(0)).current;
+  const xpTranslate = useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
     if (!id) return;
@@ -60,7 +65,31 @@ export default function BarDetailScreen(): React.ReactElement {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Subscribe to live crowd updates for this bar
+  React.useEffect(() => {
+    if (!id) return;
+    return subscribeCrowdUpdates([id], ({ barId, currentCrowd }) => {
+      if (barId === id) {
+        setBar((prev) => prev ? { ...prev, currentCrowd } : prev);
+      }
+    });
+  }, [id]);
+
   const handleBack = useCallback(() => { router.back(); }, [router]);
+
+  const showXpToast = useCallback((xp: number) => {
+    setXpToast(xp);
+    xpOpacity.setValue(0);
+    xpTranslate.setValue(0);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(xpOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(xpTranslate, { toValue: -40, duration: 300, useNativeDriver: true }),
+      ]),
+      Animated.delay(1200),
+      Animated.timing(xpOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start(() => setXpToast(null));
+  }, [xpOpacity, xpTranslate]);
 
   const handleCheckIn = useCallback(async () => {
     if (!bar) return;
@@ -74,10 +103,11 @@ export default function BarDetailScreen(): React.ReactElement {
       });
       setBar((prev) => prev ? { ...prev, currentCrowd: res.data.currentCrowd } : prev);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (res.data.xpAwarded > 0) showXpToast(res.data.xpAwarded);
     } catch {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [bar]);
+  }, [bar, showXpToast]);
 
   if (loading) return <View style={styles.container} />;
 
@@ -103,6 +133,19 @@ export default function BarDetailScreen(): React.ReactElement {
       <Pressable style={styles.backButton} onPress={handleBack} hitSlop={12}>
         <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
       </Pressable>
+
+      {/* XP toast */}
+      {xpToast !== null && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.xpToast,
+            { opacity: xpOpacity, transform: [{ translateY: xpTranslate }] },
+          ]}
+        >
+          <Text style={styles.xpToastText}>+{xpToast} XP 🔥</Text>
+        </Animated.View>
+      )}
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero */}
@@ -363,4 +406,22 @@ const styles = StyleSheet.create({
   notFoundText: { fontFamily: Fonts.display, fontSize: 24, color: Colors.textPrimary },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.primaryContainer, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12 },
   backBtnText: { fontFamily: Fonts.bodySemiBold, fontSize: 16, color: Colors.textPrimary },
+
+  // XP toast
+  xpToast: {
+    position: 'absolute',
+    bottom: 140,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255,92,0,0.95)',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    zIndex: 50,
+  },
+  xpToastText: {
+    fontFamily: Fonts.display,
+    fontSize: 22,
+    color: '#fff',
+    letterSpacing: 1,
+  },
 });

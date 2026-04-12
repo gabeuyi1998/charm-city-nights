@@ -16,13 +16,19 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gabe.charmcitynights",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Charm City Nights needs camera access to capture your nights out.",
         "NSMicrophoneUsageDescription": "Charm City Nights needs microphone access to record video stories.",
-        "NSPhotoLibraryUsageDescription": "Charm City Nights needs photo library access to save your captured moments."
+        "NSPhotoLibraryUsageDescription": "Charm City Nights needs photo library access to save your captured moments.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       }
     },
     "android": {
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -50,20 +56,22 @@
       "expo-secure-store",
       "expo-router",
       [
-        "expo-camera",
+        "react-native-vision-camera",
         {
-          "cameraPermission": "Allow Charm City Nights to access your camera to capture moments at your favorite venues.",
-          "microphonePermission": "Allow Charm City Nights to access your microphone to record video stories."
-        }
-      ],
-      [
-        "expo-media-library",
-        {
-          "photosPermission": "Allow Charm City Nights to save your captured moments to your photo library.",
-          "savePhotosPermission": "Allow Charm City Nights to save photos and videos."
+          "cameraPermissionText": "Charm City Nights needs camera access to capture your nights out.",
+          "microphonePermissionText": "Allow Charm City Nights to record video stories.",
+          "enableMicrophonePermission": true
         }
       ],
       "expo-av",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#FF5C00",
+          "sounds": []
+        }
+      ],
       [
         "expo-location",
         {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  ActivityIndicator,
   ListRenderItemInfo,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Colors, Fonts } from '../../constants/theme';
+import { getMessages, sendMessage } from '../../lib/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,50 +41,6 @@ interface BarInviteMessage {
 }
 
 type Message = TextMessage | BarInviteMessage;
-
-interface Thread {
-  name: string;
-  messages: Message[];
-}
-
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-
-const MOCK_THREADS: Record<string, Thread> = {
-  m1: {
-    name: 'canton_kate',
-    messages: [
-      { id: '1', text: 'Are you hitting Fells Point tonight?', senderId: 'them', timestamp: '9:42 PM', type: 'text' },
-      { id: '2', text: 'Yes! Meet at The Horse at 10?', senderId: 'me', timestamp: '9:44 PM', type: 'text' },
-      { id: '3', text: "Let's go 🔥", senderId: 'them', timestamp: '9:45 PM', type: 'text' },
-      { id: '4', text: "Are you at Moe's?", senderId: 'them', timestamp: '10:12 PM', type: 'text' },
-    ],
-  },
-  m2: {
-    name: 'jmill_bmore',
-    messages: [
-      { id: '1', text: 'That crawl was 🔥', senderId: 'them', timestamp: '11:30 PM', type: 'text' },
-      { id: '2', text: 'We need to do it again this weekend', senderId: 'me', timestamp: '11:32 PM', type: 'text' },
-    ],
-  },
-  m3: {
-    name: 'Power Plant Live',
-    messages: [
-      { id: '1', text: 'Flash deal tonight! 🍹 2-for-1 cocktails until midnight', senderId: 'them', timestamp: '8:00 PM', type: 'text' },
-      {
-        id: '2',
-        text: '',
-        senderId: 'them',
-        timestamp: '9:00 PM',
-        type: 'bar-invite',
-        barInvite: { barName: 'Power Plant Live', neighborhood: 'Inner Harbor', crowd: 92 },
-      },
-    ],
-  },
-  m4: { name: 'bmore_legend', messages: [{ id: '1', text: 'Race you to #1!', senderId: 'them', timestamp: '2d', type: 'text' }] },
-  m5: { name: 'harbor_hopper', messages: [{ id: '1', text: 'Sticky Rice after?', senderId: 'them', timestamp: '2d', type: 'text' }] },
-};
 
 const BAR_INVITE_OPTIONS = [
   { barName: 'The Horse You Came In On', neighborhood: 'Fells Point', crowd: 78 },
@@ -197,32 +155,62 @@ function MessageBubble({ message, contactName, avatarColor }: BubbleProps): Reac
 // ---------------------------------------------------------------------------
 
 export default function DMConversationScreen(): React.ReactElement {
-  const { userId } = useLocalSearchParams<{ userId: string }>();
-  const thread = MOCK_THREADS[userId] ?? { name: userId, messages: [] };
+  const { userId, name: nameParam } = useLocalSearchParams<{ userId: string; name?: string }>();
+  const contactName = nameParam ?? userId;
 
-  const [messages, setMessages] = useState<Message[]>([...thread.messages].reverse());
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(true);
   const [inputText, setInputText] = useState('');
   const [showInviteModal, setShowInviteModal] = useState(false);
 
   const flatListRef = useRef<FlatList<Message>>(null);
-  const avatarColor = getAvatarColor(thread.name);
+  const avatarColor = getAvatarColor(contactName);
 
-  const handleSend = useCallback(() => {
+  useEffect(() => {
+    getMessages(userId)
+      .then(({ data }) => {
+        const mapped: TextMessage[] = data.map((m) => ({
+          id: m.id,
+          text: m.content,
+          senderId: m.senderId === userId ? 'them' : 'me',
+          timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          type: 'text',
+        }));
+        setMessages(mapped.reverse());
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMessages(false));
+  }, [userId]);
+
+  const handleSend = useCallback(async () => {
     if (!inputText.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const text = inputText.trim();
+    setInputText('');
 
-    const msg: TextMessage = {
+    const optimistic: TextMessage = {
       id: Date.now().toString(),
-      text: inputText.trim(),
+      text,
       senderId: 'me',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       type: 'text',
     };
-
-    setMessages((prev) => [msg, ...prev]);
-    setInputText('');
+    setMessages((prev) => [optimistic, ...prev]);
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  }, [inputText]);
+
+    try {
+      const { data } = await sendMessage(userId, text);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === optimistic.id
+            ? { ...optimistic, id: data.id }
+            : m,
+        ),
+      );
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+    }
+  }, [inputText, userId]);
 
   const handleBarInvite = useCallback(
     (bar: (typeof BAR_INVITE_OPTIONS)[0]) => {
@@ -245,11 +233,11 @@ export default function DMConversationScreen(): React.ReactElement {
     ({ item }: ListRenderItemInfo<Message>) => (
       <MessageBubble
         message={item}
-        contactName={thread.name}
+        contactName={contactName}
         avatarColor={avatarColor}
       />
     ),
-    [thread.name, avatarColor],
+    [contactName, avatarColor],
   );
 
   const keyExtractor = useCallback((item: Message) => item.id, []);
@@ -269,10 +257,10 @@ export default function DMConversationScreen(): React.ReactElement {
         <View style={styles.headerCenter}>
           <View style={[styles.headerAvatar, { backgroundColor: avatarColor + '33' }]}>
             <Text style={[styles.headerAvatarText, { color: avatarColor }]}>
-              {getInitials(thread.name)}
+              {getInitials(contactName)}
             </Text>
           </View>
-          <Text style={styles.headerName}>{thread.name}</Text>
+          <Text style={styles.headerName}>{contactName}</Text>
         </View>
 
         <TouchableOpacity
@@ -284,16 +272,26 @@ export default function DMConversationScreen(): React.ReactElement {
       </View>
 
       {/* Messages */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        inverted
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      />
+      {loadingMessages ? (
+        <View style={styles.centerState}>
+          <ActivityIndicator color={Colors.primary} size="large" />
+        </View>
+      ) : messages.length === 0 ? (
+        <View style={styles.centerState}>
+          <Text style={styles.emptyText}>Start the conversation</Text>
+        </View>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          inverted
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        />
+      )}
 
       {/* Input bar */}
       <KeyboardAvoidingView
@@ -387,6 +385,8 @@ export default function DMConversationScreen(): React.ReactElement {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
+  centerState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyText: { fontFamily: Fonts.body, fontSize: 15, color: Colors.textMuted },
 
   // Header
   header: {

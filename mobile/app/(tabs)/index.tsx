@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -27,12 +27,14 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 
 import { Colors, Fonts, Layout } from '../../constants/theme';
+import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { BarCard, BarData } from '../../components/ui/BarCard';
 import { VenueCard } from '../../components/ui/VenueCard';
 import { SkeletonLoader } from '../../components/ui/SkeletonLoader';
 import { getBars, Bar as ApiBar } from '../../lib/api';
-import { subscribeCrowdUpdates } from '../../lib/socket';
-import { MOCK_BARS } from '../../constants/mockData';
+import { subscribeCrowdUpdates, subscribeNotifications } from '../../lib/socket';
+
+const LIVE_DOT_TTL_MS = 90_000; // 90 seconds
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,6 +52,32 @@ function toBarData(bar: ApiBar): BarData {
     badgeEmoji: '🏅',
     badgeRarity: 'COMMON',
   };
+}
+
+// ─── Recently Updated Pulse Dot (orange) ─────────────────────────────────────
+function RecentlyUpdatedDot(): React.ReactElement {
+  const opacity = useSharedValue(1);
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.2, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.5, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+  }, [opacity, scale]);
+  const style = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ scale: scale.value }] }));
+  return <Animated.View style={[styles.recentDot, style]} />;
 }
 
 // ─── Live Pulse Dot ───────────────────────────────────────────────────────────
@@ -74,11 +102,7 @@ function RankCard(): React.ReactElement {
   return (
     <View style={styles.rankCard}>
       <View style={styles.rankAvatarWrap}>
-        <Image
-          source={{ uri: MOCK_USER_PHOTOS[0].uri }}
-          style={styles.rankAvatarImg}
-          accessibilityLabel="Profile photo"
-        />
+        <View style={styles.rankAvatarPlaceholder} />
         <View style={styles.vipChip}>
           <Text style={styles.vipText}>VIP</Text>
         </View>
@@ -94,15 +118,7 @@ function RankCard(): React.ReactElement {
 }
 
 // ─── Who's Out Tonight ───────────────────────────────────────────────────────
-// Reusable mock user photos — diverse, fun, nightlife-appropriate
-export const MOCK_USER_PHOTOS = [
-  { id: 'u1', name: 'Jake M.',    location: 'Fells Point',   uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=face' },
-  { id: 'u2', name: 'Kate R.',    location: 'Federal Hill',  uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop&crop=face' },
-  { id: 'u3', name: 'Alex N.',    location: 'Canton',        uri: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&h=120&fit=crop&crop=face' },
-  { id: 'u4', name: 'Priya S.',   location: 'Mt. Vernon',    uri: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=120&h=120&fit=crop&crop=face' },
-  { id: 'u5', name: 'Marcus T.',  location: 'Inner Harbor',  uri: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=face' },
-  { id: 'u6', name: 'Zoe L.',     location: 'Hampden',       uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop&crop=face' },
-];
+export const MOCK_USER_PHOTOS: { id: string; name: string; location: string; uri: string }[] = [];
 
 const FRIENDS_OUT = MOCK_USER_PHOTOS.slice(0, 3);
 
@@ -327,28 +343,21 @@ export default function HomeScreen(): React.ReactElement {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [bars, setBars] = useState<BarData[]>([]);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Tracks when each barId last received a crowd:update (for the orange pulse dot)
+  const lastUpdatedRef = useRef<Record<string, number>>({});
+  const [recentlyUpdated, setRecentlyUpdated] = useState<Set<string>>(new Set());
+  // Unread notification count from socket events
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchBars = useCallback(async () => {
     try {
       const res = await getBars();
       setBars(res.data.map(toBarData));
       setError(null);
-    } catch {
-      // Fall back to mock data so UI always shows content
-      setBars(MOCK_BARS.map((b) => ({
-        id: b.id,
-        name: b.name,
-        neighborhood: b.neighborhood,
-        vibe: b.vibe,
-        color: b.color,
-        currentCrowd: b.currentCrowd,
-        checkInsTonight: 0,
-        activeSpecial: b.activeSpecial,
-        emoji: b.emoji,
-        badgeEmoji: b.badgeEmoji,
-        badgeRarity: b.badgeRarity as BarData['badgeRarity'],
-      })));
+    } catch (e: unknown) {
+      setBars([]);
+      setError(e instanceof Error ? e.message : 'Could not load bars');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -357,11 +366,32 @@ export default function HomeScreen(): React.ReactElement {
 
   useEffect(() => { fetchBars(); }, [fetchBars]);
 
+  // Prune bars from recentlyUpdated whose TTL has expired
+  useEffect(() => {
+    if (recentlyUpdated.size === 0) return;
+    const timer = setInterval(() => {
+      const now = Date.now();
+      const stale = [...recentlyUpdated].filter(
+        (id) => now - (lastUpdatedRef.current[id] ?? 0) >= LIVE_DOT_TTL_MS,
+      );
+      if (stale.length > 0) {
+        setRecentlyUpdated((prev) => {
+          const next = new Set(prev);
+          stale.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [recentlyUpdated]);
+
   useEffect(() => {
     if (bars.length === 0) return;
     const ids = bars.map((b) => b.id);
     return subscribeCrowdUpdates(ids, ({ barId, currentCrowd }) => {
+      lastUpdatedRef.current[barId] = Date.now();
       setBars((prev) => prev.map((b) => (b.id === barId ? { ...b, currentCrowd } : b)));
+      setRecentlyUpdated((prev) => new Set(prev).add(barId));
     });
   }, [bars.length]);
 
@@ -428,10 +458,7 @@ export default function HomeScreen(): React.ReactElement {
 
         {/* Error state */}
         {error && !loading && (
-          <View style={styles.errorWrap}>
-            <Text style={styles.errorEmoji}>⚠️</Text>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
+          <ErrorRetry message={error} onRetry={fetchBars} style={styles.errorWrap} />
         )}
 
         {/* Who's Out Tonight */}
@@ -448,13 +475,21 @@ export default function HomeScreen(): React.ReactElement {
           <View style={styles.feedSection}>
             <Text style={styles.sectionLabel}>ALL BARS TONIGHT</Text>
             {sortedBars.map((bar) => (
-              <BarCard
-                key={bar.id}
-                bar={bar}
-                onCheckIn={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
-                onShare={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-                isLive={bar.currentCrowd >= 80}
-              />
+              <View key={bar.id} style={styles.barCardRow}>
+                {recentlyUpdated.has(bar.id) && (
+                  <View style={styles.recentDotWrap}>
+                    <RecentlyUpdatedDot />
+                  </View>
+                )}
+                <View style={styles.barCardFlex}>
+                  <BarCard
+                    bar={bar}
+                    onCheckIn={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
+                    onShare={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                    isLive={bar.currentCrowd >= 80}
+                  />
+                </View>
+              </View>
             ))}
           </View>
         )}
@@ -656,6 +691,15 @@ const styles = StyleSheet.create({
 
   // Feed
   feedSection: { marginTop: 24 },
+  barCardRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  recentDotWrap: { paddingTop: 20, paddingLeft: 8, width: 20, alignItems: 'center' },
+  recentDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF5C00',
+  },
+  barCardFlex: { flex: 1 },
 
   // States
   skeletonWrap: { padding: 24, gap: 8 },

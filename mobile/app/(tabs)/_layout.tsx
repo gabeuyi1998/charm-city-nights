@@ -1,14 +1,22 @@
-import { View, StyleSheet } from 'react-native';
-import { Tabs } from 'expo-router';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
-function CameraTabIcon() {
+function CameraTabButton({ style }: { style?: object }) {
   return (
-    <View style={styles.cameraButton}>
-      <Ionicons name="camera" size={26} color="#FFFFFF" />
-    </View>
+    <Pressable
+      style={style}
+      onPress={() => router.push('/camera')}
+      accessibilityLabel="Camera"
+    >
+      <View style={styles.cameraButtonWrapper}>
+        <View style={styles.cameraButton}>
+          <Ionicons name="camera" size={26} color="#FFFFFF" />
+        </View>
+      </View>
+    </Pressable>
   );
 }
 
@@ -56,10 +64,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="camera"
         options={{
-          tabBarIcon: () => <CameraTabIcon />,
-          tabBarItemStyle: {
-            marginBottom: 8,
-          },
+          tabBarButton: ({ style }) => <CameraTabButton style={style as object} />,
         }}
       />
       <Tabs.Screen
@@ -108,6 +113,12 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
+  cameraButtonWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
   cameraButton: {
     width: 48,
     height: 48,

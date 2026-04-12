@@ -176,4 +176,186 @@ router.get('/:id/following', async (req, res: Response): Promise<void> => {
   }
 });
 
+// POST /api/users/push-token
+router.post('/push-token', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { token, platform } = req.body as { token?: string; platform?: string };
+    if (!token) {
+      res.status(400).json({ error: 'token is required' });
+      return;
+    }
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: { pushToken: token },
+    });
+    res.json({ data: { success: true, platform } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/users/notifications
+router.get('/notifications', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const notifications = await prisma.notification.findMany({
+      where: { userId: req.user!.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    res.json({
+      data: notifications.map((n) => ({
+        id: n.id,
+        type: n.type,
+        message: n.body,
+        isRead: n.read,
+        createdAt: n.createdAt,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/users/notifications/:id/read
+router.patch('/notifications/:id/read', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    await prisma.notification.updateMany({
+      where: { id: req.params.id as string, userId: req.user!.id },
+      data: { read: true },
+    });
+    res.json({ data: { success: true } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/users/dms — list conversations (grouped by other participant)
+router.get('/dms', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const meId = req.user!.id;
+
+    // Get latest message per conversation partner
+    const sent = await prisma.directMessage.findMany({
+      where: { senderId: meId },
+      include: { receiver: { select: { id: true, username: true, displayName: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const received = await prisma.directMessage.findMany({
+      where: { receiverId: meId },
+      include: { sender: { select: { id: true, username: true, displayName: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Build conversations map keyed by other-user id
+    const map = new Map<string, {
+      id: string;
+      participant: { id: string; username: string; displayName: string | null };
+      lastMessage: string;
+      lastMessageAt: Date;
+      unreadCount: number;
+    }>();
+
+    for (const m of [...sent, ...received]) {
+      const other = m.senderId === meId
+        ? (m as typeof sent[0]).receiver
+        : (m as typeof received[0]).sender;
+      if (!map.has(other.id)) {
+        const unread = received.filter((r) => r.senderId === other.id && !r.read).length;
+        map.set(other.id, {
+          id: other.id,
+          participant: other,
+          lastMessage: m.content,
+          lastMessageAt: m.createdAt,
+          unreadCount: unread,
+        });
+      }
+    }
+
+    const conversations = Array.from(map.values()).sort(
+      (a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime(),
+    );
+
+    res.json({ data: conversations });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/users/dms/:userId/messages
+router.get('/dms/:userId/messages', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const meId = req.user!.id;
+    const otherId = req.params.userId as string;
+
+    const messages = await prisma.directMessage.findMany({
+      where: {
+        OR: [
+          { senderId: meId, receiverId: otherId },
+          { senderId: otherId, receiverId: meId },
+        ],
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 100,
+    });
+
+    // Mark incoming messages as read
+    await prisma.directMessage.updateMany({
+      where: { senderId: otherId, receiverId: meId, read: false },
+      data: { read: true },
+    });
+
+    res.json({
+      data: messages.map((m) => ({
+        id: m.id,
+        senderId: m.senderId,
+        content: m.content,
+        createdAt: m.createdAt,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/users/dms/:userId/messages
+router.post('/dms/:userId/messages', verifyToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const meId = req.user!.id;
+    const receiverId = req.params.userId as string;
+    const { content } = req.body as { content?: string };
+
+    if (!content?.trim()) {
+      res.status(400).json({ error: 'content is required' });
+      return;
+    }
+
+    const receiver = await prisma.user.findUnique({ where: { id: receiverId } });
+    if (!receiver) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const message = await prisma.directMessage.create({
+      data: { senderId: meId, receiverId, content: content.trim() },
+    });
+
+    res.status(201).json({
+      data: {
+        id: message.id,
+        senderId: message.senderId,
+        content: message.content,
+        createdAt: message.createdAt,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

@@ -1,11 +1,7 @@
-import { useEffect } from 'react';
 import { View } from 'react-native';
-import { router } from 'expo-router';
 
+// Navigation is handled by tabBarButton in (tabs)/_layout.tsx —
+// this screen is never rendered but must exist as a valid route file.
 export default function CameraTab() {
-  useEffect(() => {
-    router.push('/camera');
-  }, []);
-  // Return dark view so there's no white flash while the modal loads
   return <View style={{ flex: 1, backgroundColor: '#0e0e0e' }} />;
 }
