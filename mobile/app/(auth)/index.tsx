@@ -59,7 +59,8 @@ export default function LoginScreen(): React.ReactElement {
       const userData = await syncUser({ cognitoId, username, email: email.trim().toLowerCase() }).catch(() => null);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      if (!userData?.data?.displayName) {
+      const onboardingDone = await SecureStore.getItemAsync('onboarding_complete');
+      if (!onboardingDone && !userData?.data?.displayName) {
         router.replace('/(auth)/onboarding');
       } else {
         router.replace('/(tabs)/');

@@ -54,6 +54,9 @@ export default function BarDetailScreen(): React.ReactElement {
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<'overview' | 'vault'>('overview');
   const [xpToast, setXpToast] = React.useState<number | null>(null);
+  const [checkInLoading, setCheckInLoading] = React.useState(false);
+  const [checkInError, setCheckInError] = React.useState<string | null>(null);
+  const [checkInSuccess, setCheckInSuccess] = React.useState(false);
   const xpOpacity = useRef(new Animated.Value(0)).current;
   const xpTranslate = useRef(new Animated.Value(0)).current;
 
@@ -92,22 +95,37 @@ export default function BarDetailScreen(): React.ReactElement {
   }, [xpOpacity, xpTranslate]);
 
   const handleCheckIn = useCallback(async () => {
-    if (!bar) return;
+    if (!bar || checkInLoading) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setCheckInError(null);
+    setCheckInLoading(true);
     try {
-      const loc = await import('expo-location').then((m) => m.getCurrentPositionAsync({}));
+      const expLoc = await import('expo-location');
+      const { status } = await expLoc.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setCheckInError('Location permission required to check in.');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+      const loc = await expLoc.getCurrentPositionAsync({});
       const res = await postCheckin({
         barId: bar.id,
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
       });
       setBar((prev) => prev ? { ...prev, currentCrowd: res.data.currentCrowd } : prev);
+      setCheckInSuccess(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (res.data.xpAwarded > 0) showXpToast(res.data.xpAwarded);
-    } catch {
+      setTimeout(() => setCheckInSuccess(false), 3000);
+    } catch (e: unknown) {
+      const msg = (e as { message?: string }).message ?? 'Check-in failed';
+      setCheckInError(msg.includes('Too far') ? "You're not close enough to this bar to check in." : msg);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setCheckInLoading(false);
     }
-  }, [bar, showXpToast]);
+  }, [bar, checkInLoading, showXpToast]);
 
   if (loading) return <View style={styles.container} />;
 
@@ -221,7 +239,13 @@ export default function BarDetailScreen(): React.ReactElement {
         {/* Actions */}
         <View style={styles.actionsRow}>
           <View style={{ flex: 1 }}>
-            <Button label="CHECK IN 🔥" variant="primary" size="lg" onPress={handleCheckIn} />
+            <Button
+              label={checkInSuccess ? 'CHECKED IN ✓' : checkInLoading ? 'CHECKING IN...' : 'CHECK IN 🔥'}
+              variant="primary"
+              size="lg"
+              onPress={handleCheckIn}
+              disabled={checkInLoading || checkInSuccess}
+            />
           </View>
           <Pressable
             style={styles.shareBtn}
@@ -230,6 +254,12 @@ export default function BarDetailScreen(): React.ReactElement {
             <Ionicons name="share-outline" size={22} color={Colors.textPrimary} />
           </Pressable>
         </View>
+        {checkInError ? (
+          <View style={styles.checkInError}>
+            <Ionicons name="alert-circle-outline" size={15} color="#FF5C00" />
+            <Text style={styles.checkInErrorText}>{checkInError}</Text>
+          </View>
+        ) : null}
 
         {/* VIP Upgrade card */}
         <LinearGradient
@@ -367,7 +397,15 @@ const styles = StyleSheet.create({
   specialText: { fontFamily: Fonts.body, fontSize: 16, color: Colors.textPrimary },
 
   // Actions
-  actionsRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 24, marginBottom: 20 },
+  actionsRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 24, marginBottom: 8 },
+  checkInError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+  },
+  checkInErrorText: { fontFamily: Fonts.bodyLight, fontSize: 13, color: '#FF5C00', flex: 1 },
   shareBtn: {
     width: 52,
     height: 52,

@@ -6,7 +6,8 @@ import { haversineDistanceFeet } from '../services/geo';
 import { io } from '../index';
 import prisma from '../lib/prisma';
 
-const CHECK_IN_RADIUS_FEET = 300;
+// Beta: env override allows testing from anywhere; production default is 1 mile
+const CHECK_IN_RADIUS_FEET = Number(process.env.CHECKIN_RADIUS_FEET ?? 5280);
 const XP_AWARD = 75;
 
 const router = Router();

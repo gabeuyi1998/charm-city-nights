@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 import { Colors, Fonts } from '../../constants/theme';
 import { Button } from '../../components/ui';
@@ -321,6 +322,8 @@ export default function OnboardingScreen(): React.ReactElement {
         // non-blocking — navigate anyway if onboard fails
         console.warn('[onboarding] Failed to save:', e);
       }
+      // Persist completion flag so login skips onboarding on future logins
+      await SecureStore.setItemAsync('onboarding_complete', 'true');
       router.replace('/(tabs)/');
     }
   }, [step, name, neighborhood, ageConfirmed]);
