@@ -7,8 +7,9 @@ import {
   StatusBar,
   TextInput,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -24,15 +25,17 @@ import {
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
+import { Video, ResizeMode } from 'expo-av';
 
 import { Colors, Fonts } from '../constants/theme';
-import { MOCK_STORIES, Story } from '../constants/mockData';
 import { Avatar } from '../components/ui/Avatar';
-import { Button } from '../components/ui/Button';
+import { getStories, Story } from '../lib/api';
+
+const S3_BUCKET_BASE = 'https://ccn-stories.s3.amazonaws.com';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const STORY_DURATION_MS = 5000;
-const STORY_EMOJIS = ['🦀', '🍺', '🎵', '⚡', '🌆', '🔥'];
 
 // ─── Completed / Future progress fills (non-animated) ─────────────────────────
 function ProgressTrack({
@@ -67,11 +70,20 @@ function ActiveProgressBar({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function StoryViewerScreen(): React.ReactElement {
   const router = useRouter();
-  const stories: Story[] = MOCK_STORIES;
+  const { barId } = useLocalSearchParams<{ barId?: string }>();
 
+  const [stories, setStories] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const progress = useSharedValue(0);
+
+  useEffect(() => {
+    getStories(barId)
+      .then((res) => setStories(res.data))
+      .catch(() => setStories([]))
+      .finally(() => setLoading(false));
+  }, [barId]);
 
   // Ref so callbacks always see latest currentIndex without stale closure
   const currentIndexRef = useRef(currentIndex);
@@ -175,13 +187,55 @@ export default function StoryViewerScreen(): React.ReactElement {
     panGesture,
   );
 
-  const storyEmoji = STORY_EMOJIS[currentIndex % STORY_EMOJIS.length];
+  if (loading) {
+    return (
+      <GestureHandlerRootView style={styles.root}>
+        <StatusBar hidden />
+        <View style={[styles.container, styles.centered]}>
+          <ActivityIndicator size="large" color={Colors.textPrimary} />
+        </View>
+      </GestureHandlerRootView>
+    );
+  }
+
+  if (stories.length === 0) {
+    return (
+      <GestureHandlerRootView style={styles.root}>
+        <StatusBar hidden />
+        <View style={[styles.container, styles.centered]}>
+          <Pressable style={styles.closeBtn} onPress={handleClose} accessibilityLabel="Close">
+            <Ionicons name="close" size={28} color={Colors.textPrimary} />
+          </Pressable>
+          <Text style={styles.emptyText}>No stories yet</Text>
+        </View>
+      </GestureHandlerRootView>
+    );
+  }
+
+  const s3Url = `${S3_BUCKET_BASE}/${currentStory.key}`;
 
   return (
     <GestureHandlerRootView style={styles.root}>
       <StatusBar hidden />
 
       <View style={styles.container}>
+        {/* MEDIA BACKGROUND */}
+        {currentStory.isVideo ? (
+          <Video
+            source={{ uri: s3Url }}
+            shouldPlay
+            isLooping
+            resizeMode={ResizeMode.COVER}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : (
+          <Image
+            source={{ uri: s3Url }}
+            contentFit="cover"
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+
         {/* PROGRESS BARS */}
         <View style={styles.progressBars}>
           {stories.map((_, i) => {
@@ -197,11 +251,15 @@ export default function StoryViewerScreen(): React.ReactElement {
 
         {/* TOP INFO ROW */}
         <View style={styles.topInfo}>
-          <Avatar size="sm" name={currentStory?.username} />
+          <Avatar size="sm" name={currentStory.userId} />
           <Text style={styles.username} numberOfLines={1}>
-            {currentStory?.username}
+            {currentStory.userId}
           </Text>
-          <Text style={styles.timestamp}>{currentStory?.timestamp ?? '2h ago'}</Text>
+          <Text style={styles.timestamp}>
+            {currentStory.createdAt
+              ? new Date(currentStory.createdAt).toLocaleDateString()
+              : ''}
+          </Text>
           <View style={styles.flex1} />
           <Pressable
             style={styles.closeBtn}
@@ -214,35 +272,18 @@ export default function StoryViewerScreen(): React.ReactElement {
 
         {/* CONTENT AREA — gesture target */}
         <GestureDetector gesture={combinedGesture}>
-          <View style={styles.contentArea}>
-            <Text style={styles.contentEmoji}>{storyEmoji}</Text>
-            {currentStory?.isBar && currentStory.barName ? (
-              <Text style={styles.barName}>{currentStory.barName}</Text>
-            ) : null}
-            <Text style={styles.swipeHint}>Swipe to navigate</Text>
-          </View>
+          <View style={styles.contentArea} />
         </GestureDetector>
 
         {/* BOTTOM BAR */}
         <View style={styles.bottomBar}>
-          {currentStory?.isBar ? (
-            <Button
-              label="CHECK IN HERE 🔥"
-              variant="primary"
-              size="full"
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              }}
+          <View style={styles.messageRow}>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Send message..."
+              placeholderTextColor={Colors.textMuted}
             />
-          ) : (
-            <View style={styles.messageRow}>
-              <TextInput
-                style={styles.messageInput}
-                placeholder="Send message..."
-                placeholderTextColor={Colors.textMuted}
-              />
-            </View>
-          )}
+          </View>
         </View>
       </View>
     </GestureHandlerRootView>
@@ -258,6 +299,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontFamily: Fonts.body,
+    fontSize: 18,
+    color: Colors.textMuted,
+    marginTop: 16,
   },
   flex1: {
     flex: 1,

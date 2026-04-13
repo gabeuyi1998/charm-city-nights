@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 if (!process.env.EXPO_PUBLIC_API_URL) {
   console.warn('[api] EXPO_PUBLIC_API_URL is not set — API calls will fail');
 }
-export const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://api.mtvgabe.com') + '/api';
+export const BASE_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://api.mtvgabe.com') + '/api';
 
 async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync('jwt');
