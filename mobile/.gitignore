@@ -39,3 +39,11 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# internal tooling — never commit
+.playwright-mcp/
+.claude-flow/
+.swarm/
+*.png
+branding*.png
+*.output

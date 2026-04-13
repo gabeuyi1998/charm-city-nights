@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -260,6 +261,21 @@ interface Step4Props {
 }
 
 function Step4({ notifGranted, onNotifGranted }: Step4Props): React.ReactElement {
+  const [requesting, setRequesting] = useState(false);
+
+  const handleEnable = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setRequesting(true);
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      onNotifGranted(status === 'granted');
+    } catch {
+      onNotifGranted(false);
+    } finally {
+      setRequesting(false);
+    }
+  };
+
   return (
     <View style={[styles.stepContent, styles.stepContentCentered]}>
       <Text style={styles.stepTitle}>STAY IN THE LOOP</Text>
@@ -268,14 +284,11 @@ function Step4({ notifGranted, onNotifGranted }: Step4Props): React.ReactElement
       </Text>
       <Text style={styles.bellEmoji}>🔔</Text>
       <Button
-        label="Enable Notifications"
+        label={requesting ? 'Requesting...' : 'Enable Notifications'}
         variant="primary"
         size="full"
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          // Placeholder — real permission request goes here
-          onNotifGranted(true);
-        }}
+        disabled={requesting}
+        onPress={handleEnable}
       />
       <TouchableOpacity
         style={styles.maybeLater}

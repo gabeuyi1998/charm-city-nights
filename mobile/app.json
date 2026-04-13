@@ -55,14 +55,6 @@
       "expo-font",
       "expo-secure-store",
       "expo-router",
-      [
-        "react-native-vision-camera",
-        {
-          "cameraPermissionText": "Charm City Nights needs camera access to capture your nights out.",
-          "microphonePermissionText": "Allow Charm City Nights to record video stories.",
-          "enableMicrophonePermission": true
-        }
-      ],
       "expo-av",
       [
         "expo-notifications",
@@ -76,12 +68,6 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Allow Charm City Nights to use your location to find nearby bars and check in."
-        }
-      ],
-      [
-        "@rnmapbox/maps",
-        {
-          "RNMapboxMapsDownloadToken": ""
         }
       ]
     ],

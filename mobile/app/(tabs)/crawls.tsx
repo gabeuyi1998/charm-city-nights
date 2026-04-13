@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { Colors, Fonts } from '../../constants/theme';
 import { Button } from '../../components/ui';
 import { ErrorRetry } from '../../components/ui/ErrorRetry';
+import { BarCardSkeleton } from '../../components/ui/Skeleton';
 import { getCrawls, joinCrawl, CrawlRoute as ApiCrawl } from '../../lib/api';
 
 // ---------------------------------------------------------------------------
@@ -375,9 +376,11 @@ export default function CrawlsScreen(): React.ReactElement {
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [crawlError, setCrawlError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchCrawls = useCallback(() => {
     setCrawlError(null);
+    setLoading(true);
     getCrawls().then((r) => {
       const mapped: Route[] = r.data.map((c: ApiCrawl) => ({
         id: c.id,
@@ -394,7 +397,8 @@ export default function CrawlsScreen(): React.ReactElement {
         completedStops: c.stops.slice(0, c.progress?.[0]?.completedStops ?? 0).map((s) => s.bar.name),
       }));
       setRoutes(mapped);
-    }).catch((e: Error) => setCrawlError(e.message));
+      setLoading(false);
+    }).catch((e: Error) => { setCrawlError(e.message); setLoading(false); });
   }, []);
 
   useEffect(() => { fetchCrawls(); }, [fetchCrawls]);
@@ -442,12 +446,20 @@ export default function CrawlsScreen(): React.ReactElement {
 
         {/* Routes section */}
         <Text style={styles.sectionTitle}>AVAILABLE ROUTES</Text>
-        {crawlError ? (
+        {loading && (
+          <View>
+            <BarCardSkeleton />
+            <BarCardSkeleton />
+            <BarCardSkeleton />
+            <BarCardSkeleton />
+          </View>
+        )}
+        {!loading && crawlError ? (
           <Text style={{ color: '#FF5C00', paddingHorizontal: 16, marginBottom: 8, fontFamily: Fonts.body, fontSize: 13 }}>
             Could not load crawls: {crawlError}
           </Text>
         ) : null}
-        {routes.length === 0 && !crawlError && (
+        {!loading && routes.length === 0 && !crawlError && (
           <Text style={{ color: Colors.textMuted, fontFamily: Fonts.body, fontSize: 14, textAlign: 'center', marginTop: 24 }}>
             No crawls available yet.
           </Text>

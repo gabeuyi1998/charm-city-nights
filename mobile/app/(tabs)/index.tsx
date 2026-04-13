@@ -31,6 +31,7 @@ import { ErrorRetry } from '../../components/ui/ErrorRetry';
 import { BarCard, BarData } from '../../components/ui/BarCard';
 import { VenueCard } from '../../components/ui/VenueCard';
 import { SkeletonLoader } from '../../components/ui/SkeletonLoader';
+import { BarCardSkeleton } from '../../components/ui/Skeleton';
 import { getBars, Bar as ApiBar } from '../../lib/api';
 import { subscribeCrowdUpdates, subscribeNotifications } from '../../lib/socket';
 
@@ -451,8 +452,10 @@ export default function HomeScreen(): React.ReactElement {
         {/* Loading skeleton */}
         {loading && (
           <View style={styles.skeletonWrap}>
-            <SkeletonLoader variant="card" />
-            <SkeletonLoader variant="card" style={{ marginTop: 8 }} />
+            <BarCardSkeleton />
+            <BarCardSkeleton />
+            <BarCardSkeleton />
+            <BarCardSkeleton />
           </View>
         )}
 

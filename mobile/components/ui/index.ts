@@ -6,5 +6,6 @@ export * from './StoryCircle';
 export * from './BadgeCard';
 export * from './CrowdMeter';
 export * from './SkeletonLoader';
+export { Skeleton, BarCardSkeleton } from './Skeleton';
 export * from './Toast';
 export * from './BottomSheet';

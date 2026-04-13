@@ -208,13 +208,42 @@ export default function ProfileScreen(): React.ReactElement {
           </View>
         </View>
 
+        {/* XP Level Progress Bar */}
+        {user != null && (
+          <View style={styles.xpSection}>
+            {(() => {
+              const xp = user.xp ?? 0;
+              const xpIntoLevel = xp % 500;
+              const xpToNextLevel = 500;
+              const progress = xpIntoLevel / xpToNextLevel;
+              const level = Math.floor(xp / 500) + 1;
+              return (
+                <>
+                  <View style={styles.xpLabelRow}>
+                    <Text style={styles.xpLevelText}>LEVEL {level}</Text>
+                    <Text style={styles.xpCountText}>{xpIntoLevel} / {xpToNextLevel} XP</Text>
+                  </View>
+                  <View style={styles.xpTrack}>
+                    <LinearGradient
+                      colors={['#FF6B35', '#FFD700']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[styles.xpFill, { width: `${progress * 100}%` }]}
+                    />
+                  </View>
+                </>
+              );
+            })()}
+          </View>
+        )}
+
         {/* Stats Row */}
         <View style={styles.statsRow}>
           {[
-            { value: user?.barsVisited ?? 0, label: 'BARS' },
-            { value: user?.badgesCollected ?? 0, label: 'BADGES' },
-            { value: user?.following ?? 0, label: 'FOLLOWING', pressable: true },
-            { value: user?.followers ?? 0, label: 'FOLLOWERS', pressable: true },
+            { value: user?.barsVisited != null ? user.barsVisited : '—', label: 'BARS' },
+            { value: user?.badgesCollected != null ? user.badgesCollected : '—', label: 'BADGES' },
+            { value: user?.following != null ? user.following : '—', label: 'FOLLOWING', pressable: true },
+            { value: user?.followers != null ? user.followers : '—', label: 'FOLLOWERS', pressable: true },
           ].map((stat, idx) => (
             <Pressable
               key={stat.label}
@@ -475,6 +504,38 @@ const styles = StyleSheet.create({
   editButtonWrap: {
     marginTop: 12,
     paddingHorizontal: 40,
+  },
+
+  // XP progress
+  xpSection: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  xpLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  xpLevelText: {
+    fontFamily: Fonts.bodyBold,
+    fontSize: 12,
+    color: Colors.primary,
+    letterSpacing: 1,
+  },
+  xpCountText: {
+    fontFamily: Fonts.bodyLight,
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  xpTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+  },
+  xpFill: {
+    height: 6,
+    borderRadius: 3,
   },
 
   // Stats row
