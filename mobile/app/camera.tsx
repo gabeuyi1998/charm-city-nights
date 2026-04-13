@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Video, ResizeMode } from 'expo-av';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +32,7 @@ import { getStoryPresign, createStory } from '../lib/api';
 
 type CaptureMode = 'photo' | 'video';
 type FlashSetting = 'off' | 'on' | 'auto';
+type Facing = 'front' | 'back';
 
 const FLASH_ICONS: Record<FlashSetting, React.ComponentProps<typeof Ionicons>['name']> = {
   off: 'flash-off',
@@ -265,7 +266,7 @@ export default function CameraScreen(): React.ReactElement {
   const [permission, requestPermission] = useCameraPermissions();
   const [micGranted, setMicGranted] = useState(false);
 
-  const [facing, setFacing] = useState<CameraType>('back');
+  const [facing, setFacing] = useState<Facing>('back');
   const [flash, setFlash] = useState<FlashSetting>('off');
   const [captureMode, setCaptureMode] = useState<CaptureMode>('photo');
   const [isRecording, setIsRecording] = useState(false);
@@ -293,11 +294,9 @@ export default function CameraScreen(): React.ReactElement {
   }, []);
 
   const switchMode = useCallback((m: CaptureMode) => {
-    if (isRecording) return; // don't switch while recording
+    if (isRecording) return;
     Haptics.selectionAsync();
     setCaptureMode(m);
-    setCameraReady(false); // brief re-init when mode changes
-    setTimeout(() => setCameraReady(true), 400);
   }, [isRecording]);
 
   const handleShutter = useCallback(async () => {
@@ -393,7 +392,7 @@ export default function CameraScreen(): React.ReactElement {
         style={StyleSheet.absoluteFill}
         facing={facing}
         flash={flash}
-        mode={captureMode === 'video' ? 'video' : 'picture'}
+        mode="video"
         onCameraReady={() => setCameraReady(true)}
       />
 

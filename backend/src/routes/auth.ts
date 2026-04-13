@@ -46,7 +46,9 @@ router.post('/sync', authLimiter, async (req: AuthRequest, res: Response): Promi
       create: {
         cognitoId,
         username,
-        displayName: displayName ?? null,
+        // displayName is required (non-nullable). Use provided value or fall back
+        // to username — onboarding will let the user set their real name.
+        displayName: displayName ?? username,
         email: email ?? null,
         authProvider: authProvider ?? 'cognito',
       },
